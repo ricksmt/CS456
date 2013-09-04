@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 /**
  * Objects of this class contain information about a network nodes and their connections.  
@@ -125,23 +126,36 @@ public class NetworkModel
 				scanner.close();
 				return;
 			}
-			for(String type = scanner.next(); scanner.hasNext(); type = scanner.next()){
+
+			while (scanner.hasNext()) {
+				String type = scanner.next();
 				switch(type){
 					case "N":
 						double x = scanner.nextDouble();
 						double y = scanner.nextDouble();
-						String name = scanner.next();
+						String name = scanner.findInLine(Pattern.compile("\"[^\"]*\""));
+						int index = name.lastIndexOf('"');
+						if (index > 1) name = name.substring(1, index);
+						else if (index == 1) name = "";
 						addNode(new NetworkNode(name, x, y));
 						break;
 					case "C":
-						String node1 = scanner.next();
+						String node1 = scanner.findInLine(Pattern.compile("\"[^\"]*\""));
+						int index1 = node1.lastIndexOf('"');
+						if (index1 > 1) node1 = node1.substring(1, index1);
+						else if (index1 == 1) node1 = "";
 						NetworkConnection.Side side1 = NetworkConnection.Side.parseSide(scanner.next().charAt(0));
-						String node2 = scanner.next();
+						String node2 = scanner.findInLine(Pattern.compile("\"[^\"]*\""));
+						int index2 = node2.lastIndexOf('"');
+						if (index2 > 1) node2 = node2.substring(1, index2);
+						else if (index2 == 1) node2 = "";
 						NetworkConnection.Side side2 = NetworkConnection.Side.parseSide(scanner.next().charAt(0));
 						addConnection(new NetworkConnection(node1, side1, node2, side2));
 						break;
+					default: break;
 				}
-				scanner.nextLine();
+				if(scanner.hasNext()) scanner.nextLine();
+				else break;
 			}
 			scanner.close();
 		}

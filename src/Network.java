@@ -13,14 +13,15 @@ public class Network {
 		}
 
 		JFrame F = new JFrame("Program 1"); // Create the frame with a title
-		F.setBounds(100,100,300,400);// Set the position and size of the  frame's window
+		F.setBounds(100, 100, 300, 400);// Set the position and size of the  frame's window
 		F.addWindowListener(
 			new WindowAdapter() {// Setup quitting on close of window
 				public void windowClosing(WindowEvent evt) { System.exit(0); }
 			}
 		);
 		
-		F.getContentPane().add(new NetworkView(new NetworkModel(args[0])));// Add our component to the frame
+		NetworkView view = new NetworkView(new NetworkModel(args[0]));
+		F.getContentPane().add(view);// Add our component to the frame
 		F.setVisible(true);
 	}
 }

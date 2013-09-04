@@ -19,7 +19,7 @@ public class NetworkNode
 	public NetworkNode(String nodeName, double xCenter, double yCenter)
 	{
 		setName(nodeName);
-		setLocation(x, y);
+		setLocation(xCenter, yCenter);
 	}
 	
 	// Getters and Setters
@@ -48,8 +48,7 @@ public class NetworkNode
 	/**
 	* Changes the location of the center of the node
 	*/
-	public void setLocation(double xCenter, double yCenter)
-	{
+	public void setLocation(double xCenter, double yCenter) {
 		x = xCenter;
 		y = yCenter;
 	}
@@ -59,6 +58,7 @@ public class NetworkNode
 	*/
 	public void setNetwork(NetworkModel network) { model = network; }
 	
+	// Methods	
 	@Override
 	public String toString() { return x + ' ' + y + '"' + name + '"'; }
 }
