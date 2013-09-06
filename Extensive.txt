@@ -1,0 +1,7 @@
+N 200 200 "Central"
+N 300 300 "Authentication server"
+C "Central" R "Authentication server" L
+N 400 100 "Yahoo!!"
+C "Central" T "Yahoo!!" B
+C "Yahoo!!" B "Authentication server" T
+C "Yahoo!!" R "Authentication server" R
