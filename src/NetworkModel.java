@@ -23,7 +23,7 @@ public class NetworkModel
 	 * Creates an empty network model that has a unique default file name and no contents
 	 */
 	public NetworkModel () {
-		filename = DEFAULT_FILENAME;
+		setFileName(DEFAULT_FILENAME);
 		parseFile();
 	}
 	/**
@@ -32,7 +32,7 @@ public class NetworkModel
 	 * @param fileName the name of the file to be read.
 	 */
 	public NetworkModel(String fileName) {
-		filename = fileName;
+		setFileName(fileName);
 		parseFile();
 	}
 	/**
@@ -73,7 +73,10 @@ public class NetworkModel
 	 * Adds the specified NetworkNode to the list of network objects
 	 * @param newNode
 	 */
-	public void addNode(NetworkNode newNode) { change = nodes.add(newNode) || change; }
+	public void addNode(NetworkNode newNode) {
+		newNode.setNetwork(this);
+		change = nodes.add(newNode) || change;
+	}
 	/**
 	 * Returns the number of network node objects in this model.
 	 */
@@ -90,7 +93,8 @@ public class NetworkModel
 	public void removeNode(int i) {
 		if(i >= nodes.size()) return;
 		change = true;
-		nodes.remove(i);
+		NetworkNode node = nodes.remove(i);
+		node.setNetwork(null);
 	}
 	/**
 	 * Adds the specified NetworkConnection to the list of connections
@@ -176,7 +180,7 @@ public class NetworkModel
 	**/
 	public static void Test() {
 		NetworkModel model = new NetworkModel();
-		AssertModel(model, 0, 0, model.unsavedChanges());// TODO: What should change be?
+		AssertModel(model, 0, 0, false);
 		
 		model.addNode(new NetworkNode("A", 0, 0));
 		AssertModel(model, 1, 0, true);
@@ -199,7 +203,8 @@ public class NetworkModel
 		AssertModel(model, 2, 1, true);
 		
 		NetworkConnection connection = model.getConnection(0);
-		AssertConnection(connection, "A", NetworkConnection.Side.Top, "B", NetworkConnection.Side.Bottom);
+		AssertConnection(connection, "A", NetworkConnection.Side.Top,
+									 "B", NetworkConnection.Side.Bottom);
 		
 		try { model.save(); }
 		catch (IOException e) { assert(false); }
@@ -226,14 +231,53 @@ public class NetworkModel
 		
 		model.removeNode(2);
 		AssertModel(model, 2, 0, false);
+		
+		node = model.getNode(0);
+		node.setName("C");
+		AssertNode(node, "C", 0, 0);
+		
+		node.setLocation(10, 20);
+		AssertNode(node, "C", 10, 20);
+		
+		model = new NetworkModel("Empty.txt");
+		AssertModel(model, 0, 0, false);
+
+		model.setFileName(DEFAULT_FILENAME);
+		try { model.save(); }
+		catch (IOException e) { assert(false); }
+		AssertModel(model, 0, 0, false);
+		
+		model.addConnection(new NetworkConnection("A", NetworkConnection.Side.Left,
+												  "B", NetworkConnection.Side.Right));
+		AssertModel(model, 0, 1, true);
+		AssertConnection(connection, "A", NetworkConnection.Side.Left,
+				 					 "B", NetworkConnection.Side.Right);
+
+		try { model.save(); }
+		catch (IOException e) { assert(false); }
+		AssertModel(model, 0, 1, false);
+		
+		model = new NetworkModel(DEFAULT_FILENAME);
+		AssertModel(model, 0, 1, true);
+		AssertConnection(connection, "A", NetworkConnection.Side.Left,
+				 					 "B", NetworkConnection.Side.Right);
+		
+		model = new NetworkModel("Empty.txt");
+		AssertModel(model, 0, 0, false);
+
+		// Clear Default file for future testing.
+		model.setFileName(DEFAULT_FILENAME);
+		try { model.save(); }
+		catch (IOException e) { assert(false); }
+		AssertModel(model, 0, 0, false);
 	}
 	
-	private static boolean AssertModel(NetworkModel model, int nodes, int connection, boolean change){
-		assert(model.nodes.size() == 1);
-		assert(model.connections.size() == 0);
-		assert(model.change == true);
-		assert(model.nNodes() == 1);
-		assert(model.nConnections() == 0);
+	private static boolean AssertModel(NetworkModel model, int nodes, int connections, boolean change){
+		assert(model.nodes.size() == nodes);
+		assert(model.connections.size() == connections);
+		assert(model.change == change);
+		assert(model.nNodes() == nodes);
+		assert(model.nConnections() == connections);
 		return true;
 	}
 	
@@ -246,7 +290,10 @@ public class NetworkModel
 	
 	private static boolean AssertConnection(NetworkConnection connection,
 			String node1, NetworkConnection.Side side1, String node2, NetworkConnection.Side side2) {
-		// TODO: (How) Should I do this?
+		assert(connection.node1.equals(node1));
+		assert(connection.side1 == side1);
+		assert(connection.node2.equals(node2));
+		assert(connection.side2 == side2);
 		return true;
 	}
 }

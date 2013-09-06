@@ -60,5 +60,5 @@ public class NetworkNode
 	
 	// Methods	
 	@Override
-	public String toString() { return x + ' ' + y + '"' + name + '"'; }
+	public String toString() { return x + " " + y + " \"" + name + "\""; }
 }

@@ -49,5 +49,5 @@ public class NetworkConnection {
 	}
 	
 	@Override
-	public String toString() { return node1 + ' ' + side1 + ' ' + node2 + ' ' + side2; }
+	public String toString() { return "\"" + node1 + "\" " + side1 + " \"" + node2 + "\" " + side2; }
 }
