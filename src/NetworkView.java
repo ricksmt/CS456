@@ -2,12 +2,15 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 import javax.swing.JPanel;
 
 
 @SuppressWarnings("serial")
-public class NetworkView extends JPanel {
+public class NetworkView extends JPanel implements MouseListener {
 	
 	NetworkModel model;
 	
@@ -61,4 +64,67 @@ public class NetworkView extends JPanel {
 			g.drawLine(x1, y1, x2, y2);
 		}
     }
+	
+	
+	
+	public GeometryDescriptor pointGeometry(Point mouseLoc) throws Exception
+	{
+		final int ERROR = 5;
+		for(int i = model.nConnections() - 1; i >= 0; i--) {
+			NetworkConnection c = model.getConnection(i);
+			NetworkNode n1 = null, n2 = null;
+			for(int j = 0; n1 == null || n2 == null; j++) {
+				NetworkNode n = model.getNode(j);
+				if(n.getName() == c.node1) n1 = n;
+				else if(n.getName() == c.node2) n2 = n;
+			}
+			Point p1 = new Point(), p2 = new Point();
+			p1.setLocation(n1.getX(), n1.getY());
+			Font.g;
+			switch(c.side1) {
+				case Bottom: p1.setLocation(p1.getX(), p1.getY() - );// TODO: Finish
+					break;
+				case Left:
+					break;
+				case Right:
+					break;
+				case Top:
+					break;
+				default: throw new Exception();
+			}
+			p2.setLocation(n2.getX(), n2.getY());
+			Point min = new Point(), max = new Point();
+			min.setLocation(Math.min(p1.getX(), p2.getX()), Math.min(p1.getY(), p2.getY()));
+			max.setLocation(Math.max(p1.getX(), p2.getX()), Math.max(p1.getY(), p2.getY()));
+			if(mouseLoc.getX() < min.getX() - ERROR) continue;
+			else if(mouseLoc.getX() > max.getX() + ERROR) continue;
+			else if(mouseLoc.getY() < min.getY() - ERROR) continue;
+			else if(mouseLoc.getY() > max.getY() + ERROR) continue;
+			else if(Math.abs((p2.getY() - p1.getY()) * mouseLoc.getX() + (p1.getX() - p2.getX()) * mouseLoc.getY() -
+					(p2.getY() - p1.getY()) * p1.getX() - (p1.getX() - p2.getX()) * p1.getY()) <= ERROR) {
+				return new GeometryDescriptor(i);
+			}
+		}
+		for(int i = model.nNodes() - 1; i >= 0; i--) {
+			
+		}
+		return null;
+	}
+	
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		System.out.println(pointGeometry(e.getPoint()));
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent arg0) { }
+
+	@Override
+	public void mouseEntered(MouseEvent arg0) { }
+
+	@Override
+	public void mouseExited(MouseEvent arg0) { }
+
+	@Override
+	public void mousePressed(MouseEvent arg0) { }
 }
