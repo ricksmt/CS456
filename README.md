@@ -15,3 +15,8 @@ Run the program without any parameters to run the NetworkModel.Test method.
 Run the program with the parameter "Empty.txt": a non-existent file.
 Run the program with the parameter "Sample.txt": a version of the sample in the project description modified to avoid overlap.
 Run the program with the parameter "Extensive.txt": a slightly more complex file.
+
+Program 2
+---------
+
+See Project 1 notes for set up. Then start clicking.

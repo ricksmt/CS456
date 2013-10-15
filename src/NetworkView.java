@@ -1,4 +1,3 @@
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -11,12 +10,15 @@ import javax.swing.JPanel;
 
 @SuppressWarnings("serial")
 public class NetworkView extends JPanel implements MouseListener {
+
+	static final int fontHeight = 16;
 	
 	NetworkModel model;
 	GeometryDescriptor descriptor = new GeometryDescriptor();
 	
 	public NetworkView(NetworkModel model) {
 		this.model = model;
+		setFont(new Font("Helvetica", Font.PLAIN, fontHeight));
 		this.addMouseListener(this);
 	}
 	
@@ -24,12 +26,7 @@ public class NetworkView extends JPanel implements MouseListener {
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		
-		final int fontHeight = 16;
-        Font font = new Font("Helvetica", Font.PLAIN, fontHeight);
-        g.setFont(font);
         FontMetrics fm = g.getFontMetrics();
-
-		g.setColor(Color.BLACK);
 		for(int i = 0; i < model.nNodes(); i++) {
 			NetworkNode node = model.getNode(i);
 			int width = fm.stringWidth(node.getName());
@@ -77,8 +74,8 @@ public class NetworkView extends JPanel implements MouseListener {
 			NetworkNode n1 = null, n2 = null;
 			for(int j = 0; (n1 == null || n2 == null) && j < model.nNodes(); j++) {
 				NetworkNode n = model.getNode(j);
-				if(n.getName() == c.node1) n1 = n;
-				else if(n.getName() == c.node2) n2 = n;
+				if(n.getName().equals(c.node1)) n1 = n;
+				else if(n.getName().equals(c.node2)) n2 = n;
 			}
 			if (n1 == null || n2 == null) continue;
 			
@@ -87,17 +84,17 @@ public class NetworkView extends JPanel implements MouseListener {
 			Point p1 = new Point(), p2 = new Point();
 			p1.setLocation(n1.getX(), n1.getY());
 			switch(c.side1) {
-				case Bottom: p1.setLocation(p1.getX(), p1.getY() - fm.getHeight()); break;
+				case Bottom: p1.setLocation(p1.getX(), p1.getY() + fm.getHeight()); break;
 				case Left: p1.setLocation(p1.getX() - fm.stringWidth(n1.getName()), p1.getY()); break;
 				case Right: p1.setLocation(p1.getX() + fm.stringWidth(n1.getName()), p1.getY()); break;
-				case Top: p1.setLocation(p1.getX(), p1.getY() + fm.getHeight()); break;
+				case Top: p1.setLocation(p1.getX(), p1.getY() - fm.getHeight()); break;
 			}
 			p2.setLocation(n2.getX(), n2.getY());
-			switch(c.side1) {
-				case Bottom: p2.setLocation(p2.getX(), p2.getY() - fm.getHeight()); break;
+			switch(c.side2) {
+				case Bottom: p2.setLocation(p2.getX(), p2.getY() + fm.getHeight()); break;
 				case Left: p2.setLocation(p2.getX() - fm.stringWidth(n2.getName()), p2.getY()); break;
 				case Right: p2.setLocation(p2.getX() + fm.stringWidth(n2.getName()), p2.getY()); break;
-				case Top: p2.setLocation(p2.getX(), p2.getY() + fm.getHeight()); break;
+				case Top: p2.setLocation(p2.getX(), p2.getY() - fm.getHeight()); break;
 			}
 			
 			// Get box
@@ -108,8 +105,8 @@ public class NetworkView extends JPanel implements MouseListener {
 			else if(mouseLoc.getX() > max.getX() + ERROR) continue;
 			else if(mouseLoc.getY() < min.getY() - ERROR) continue;
 			else if(mouseLoc.getY() > max.getY() + ERROR) continue;
-			else if(Math.abs((p2.getY() - p1.getY()) * mouseLoc.getX() + (p1.getX() - p2.getX()) * mouseLoc.getY() -
-					(p2.getY() - p1.getY()) * p1.getX() - (p1.getX() - p2.getX()) * p1.getY()) <= ERROR) {
+			else if(Math.abs(((p2.getY() - p1.getY()) * mouseLoc.getX() + (p1.getX() - p2.getX()) * mouseLoc.getY() + p2.getX() * p1.getY() - p1.getX() * p2.getY()) /
+					(Math.pow(Math.pow(p2.getX() - p1.getX(), 2) + Math.pow(p2.getY() - p1.getY(), 2), 0.5))) <= ERROR) {
 				return new GeometryDescriptor(c, i);
 			}
 		}
@@ -149,6 +146,7 @@ public class NetworkView extends JPanel implements MouseListener {
 	
 	@Override
 	public void mouseReleased(MouseEvent e) {
+		System.out.println("Point: " + e.getPoint());
 		GeometryDescriptor gd = pointGeometry(e.getPoint());
 		if(gd.equals(GeometryDescriptor.NULL_DESCRIPTOR)) return;
 		else descriptor = gd;
