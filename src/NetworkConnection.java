@@ -1,7 +1,9 @@
+import java.util.Observable;
+
 	/**
 	* This class describes a connection between two network nodes
 	*/
-public class NetworkConnection {
+public class NetworkConnection extends Observable {
 	
 	protected String node1, node2;
 	protected Side side1, side2;

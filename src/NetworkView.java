@@ -2,24 +2,35 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Point;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.util.Observable;
+import java.util.Observer;
 
 import javax.swing.JPanel;
 
 
 @SuppressWarnings("serial")
-public class NetworkView extends JPanel implements MouseListener {
+public class NetworkView extends JPanel implements KeyListener, MouseListener, MouseMotionListener, Observer {
 
 	static final int fontHeight = 16;
 	
 	NetworkModel model;
 	GeometryDescriptor descriptor = new GeometryDescriptor();
+	MouseEvent lastEvent = null;
 	
 	public NetworkView(NetworkModel model) {
 		this.model = model;
 		setFont(new Font("Helvetica", Font.PLAIN, fontHeight));
+
+		this.model.addObserver(this);
+		this.setFocusable(true);
+		this.addKeyListener(this);
 		this.addMouseListener(this);
+		this.addMouseMotionListener(this);
 	}
 	
 	@Override
@@ -31,6 +42,19 @@ public class NetworkView extends JPanel implements MouseListener {
 			NetworkNode node = model.getNode(i);
 			int width = fm.stringWidth(node.getName());
 			g.drawOval((int)node.getX() - width, (int)node.getY() - fontHeight, width * 2, fontHeight * 2);
+			if(descriptor == null);
+			else if (node.equals(descriptor.object)) {
+				g.fill3DRect((int)node.getX() - width - 2, (int)node.getY() - 2, 4, 4, false);
+				g.fill3DRect((int)node.getX() + width - 2, (int)node.getY() - 2, 4, 4, false);
+				g.fill3DRect((int)node.getX() - 2, (int)node.getY() - fontHeight - 2, 4, 4, false);
+				g.fill3DRect((int)node.getX() - 2, (int)node.getY() + fontHeight - 2, 4, 4, false);
+			}
+			else if(node.getName().equals(descriptor.object)) {
+				int cursorX = fm.stringWidth(node.getName().substring(0, descriptor.index));
+				g.drawLine((int)node.getX() - width / 2 + cursorX, (int)node.getY() + fontHeight / 2,
+						(int)node.getX() - width / 2 + cursorX, (int)node.getY() - fontHeight / 2);
+				g.drawString(node.getName(), (int)node.getX() - width / 2, (int)node.getY() + fontHeight / 2);
+			}
 			g.drawString(node.getName(), (int)node.getX() - width / 2, (int)node.getY() + fontHeight / 2);
 		}
 		
@@ -61,9 +85,13 @@ public class NetworkView extends JPanel implements MouseListener {
 			else if(connection.side2 == NetworkConnection.Side.Bottom) y2 += fontHeight;
 			
 			g.drawLine(x1, y1, x2, y2);
+			if(descriptor != null && connection.equals(descriptor.object)) {
+				g.fill3DRect(x1 - 2, y1 - 2, 4, 4, false);
+				g.fill3DRect(x2 - 2, y2 - 2, 4, 4, false);
+			}
 		}
 		
-		if (!descriptor.equals(GeometryDescriptor.NULL_DESCRIPTOR)) g.drawString(descriptor.toString(), 5, 20);
+		if (descriptor != null && !descriptor.equals(GeometryDescriptor.NULL_DESCRIPTOR)) g.drawString(descriptor.toString(), 5, 20);
     }
 	
 	public GeometryDescriptor pointGeometry(Point mouseLoc) {
@@ -143,25 +171,126 @@ public class NetworkView extends JPanel implements MouseListener {
 		}
 		return new GeometryDescriptor();
 	}
+
+	@Override
+	public void update(Observable o, Object arg) {
+		repaint();
+	}
 	
 	@Override
-	public void mouseReleased(MouseEvent e) {
-		System.out.println("Point: " + e.getPoint());
+	public void mouseReleased(MouseEvent e) { }
+
+	@Override
+	public void mouseClicked(MouseEvent e) { }
+
+	@Override
+	public void mouseEntered(MouseEvent e) { }
+
+	@Override
+	public void mouseExited(MouseEvent e) { }
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		lastEvent = e;
 		GeometryDescriptor gd = pointGeometry(e.getPoint());
 		if(gd.equals(GeometryDescriptor.NULL_DESCRIPTOR)) return;
+		else if(gd.equals(descriptor)) return;
 		else descriptor = gd;
 		repaint();
 	}
 
 	@Override
-	public void mouseClicked(MouseEvent arg0) { }
+	public void mouseDragged(MouseEvent e) {
+		final int THRESHOLD = 3;
+		
+		if(descriptor.equals(GeometryDescriptor.NULL_DESCRIPTOR)) return;
+		else if(descriptor.object instanceof NetworkConnection) return;
+		else if(descriptor.object instanceof String) {
+			for(int i = 0; i < model.nNodes(); i++) {
+				NetworkNode node = model.getNode(i);
+				if(node.getName().equals(descriptor.object)) {
+					descriptor = new GeometryDescriptor(node, i);
+					repaint();
+					break;
+				}
+			}
+		}
+		
+		if(e.getPoint().distance(lastEvent.getPoint()) > THRESHOLD) {
+			double deltaX = e.getPoint().getX() - lastEvent.getPoint().getX();
+			double deltaY = e.getPoint().getY() - lastEvent.getPoint().getY();
+			lastEvent = e;
+			NetworkNode node = (NetworkNode)descriptor.object;
+			node.setLocation(node.getX() + deltaX, node.getY() + deltaY);
+		}
+	}
 
 	@Override
-	public void mouseEntered(MouseEvent arg0) { }
+	public void mouseMoved(MouseEvent e) { }
+	
 
 	@Override
-	public void mouseExited(MouseEvent arg0) { }
+	public void keyTyped(KeyEvent e) { }
+	
 
 	@Override
-	public void mousePressed(MouseEvent arg0) { }
+	public void keyPressed(KeyEvent e) { }
+	
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		if(descriptor == null) return;
+		else if(e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+			descriptor = null;
+			repaint();
+		}
+		else if(descriptor.object instanceof String) {
+			NetworkNode node = null;
+			for(int i = 0; i < model.nNodes(); i++) {
+				NetworkNode temp = model.getNode(i);
+				if(temp.getName().equals(descriptor.object)) {
+					node = temp;
+					break;
+				}
+			}
+			if(node == null) descriptor = null;
+			else {
+				String name = node.getName();
+				switch(e.getKeyCode()) {
+					case KeyEvent.VK_BACK_SPACE:
+						if(descriptor.index <= 0) break;
+						String backspace = name.substring(0, descriptor.index - 1) + name.substring(descriptor.index);
+						descriptor.object = backspace;
+						descriptor.index--;
+						node.setName(backspace);
+						break;
+					case KeyEvent.VK_DELETE:
+						if(descriptor.index >= name.length()) break;
+						String delete = name.substring(0, descriptor.index) + name.substring(descriptor.index + 1);
+						descriptor.object = delete;
+						node.setName(delete);
+						break;
+					case KeyEvent.VK_LEFT:
+						if(descriptor.index > 0) {
+							descriptor.index--;
+							repaint();
+						}
+						break;
+					case KeyEvent.VK_RIGHT:
+						if(descriptor.index < name.length()) {
+							descriptor.index++;
+							repaint();
+						}
+						break;
+					default:
+						if(e.getKeyChar() == KeyEvent.CHAR_UNDEFINED) break;
+						String result = name.substring(0, descriptor.index) + e.getKeyChar() + name.substring(descriptor.index);
+						descriptor.object = result;
+						descriptor.index++;
+						node.setName(result);
+						break;
+				}
+			}
+		}
+	}
 }

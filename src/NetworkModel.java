@@ -5,13 +5,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
 /**
  * Objects of this class contain information about a network nodes and their connections.  
  */
-public class NetworkModel
+public class NetworkModel extends Observable implements Observer
 {
 	private static final String DEFAULT_FILENAME = "Default.txt";
 	private String filename;
@@ -76,6 +78,8 @@ public class NetworkModel
 	public void addNode(NetworkNode newNode) {
 		newNode.setNetwork(this);
 		change = nodes.add(newNode) || change;
+		newNode.addObserver(this);
+		notifyObservers(newNode);
 	}
 	/**
 	 * Returns the number of network node objects in this model.
@@ -95,12 +99,18 @@ public class NetworkModel
 		change = true;
 		NetworkNode node = nodes.remove(i);
 		node.setNetwork(null);
+		node.deleteObserver(this);
+		notifyObservers(node);
 	}
 	/**
 	 * Adds the specified NetworkConnection to the list of connections
 	 * @param newConnection
 	 */
-	public void addConnection(NetworkConnection newConnection) { change = connections.add(newConnection) || change; }
+	public void addConnection(NetworkConnection newConnection) {
+		change = connections.add(newConnection) || change;
+		newConnection.addObserver(this);
+		notifyObservers(newConnection);
+	}
 	/**
 	 * Returns the number of network connections in this model.
 	 */
@@ -117,7 +127,9 @@ public class NetworkModel
 	public void removeConnection(int i) {
 		if(i >= connections.size()) return;
 		change = true;
-		connections.remove(i);
+		NetworkConnection connection = connections.remove(i);
+		connection.deleteObserver(this);
+		notifyObservers(connection);
 	}
 	
 	private void parseFile() {
@@ -295,5 +307,24 @@ public class NetworkModel
 		assert(connection.node2.equals(node2));
 		assert(connection.side2 == side2);
 		return true;
+	}
+	
+	@Override
+	public void update(Observable o, Object arg) {
+		if(o instanceof NetworkNode) {
+			NetworkNode node = (NetworkNode)o;
+			if(arg instanceof String) {// Name change
+				String name = (String)arg;
+				for(int i = 0; i < nConnections(); i++) {
+					NetworkConnection connection = getConnection(i);
+					if(connection.node1.equals(name)) connection.node1 = node.getName();
+					if(connection.node2.equals(name)) connection.node2 = node.getName();
+				}
+			}
+		}
+		else if(o instanceof NetworkConnection);
+		else return;// Nothing updated, so don't worry others
+		setChanged();
+		notifyObservers(o);
 	}
 }

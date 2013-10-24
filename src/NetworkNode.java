@@ -1,8 +1,11 @@
+import java.awt.Point;
+import java.util.Observable;
+
 /**
 * Objects of this class describe a single node in a network.
 **/
 
-public class NetworkNode
+public class NetworkNode extends Observable
 {
 	private String name;
 	private double x;
@@ -44,19 +47,32 @@ public class NetworkNode
 	* Changes the name of the node
 	* @param newName
 	*/
-	public void setName(String newName) { name = newName; }
+	public void setName(String newName) {
+		String old = name;
+		name = newName;
+		setChanged();
+		notifyObservers(old);
+	}
 	/**
 	* Changes the location of the center of the node
 	*/
 	public void setLocation(double xCenter, double yCenter) {
+		Point point = new Point();
+		point.setLocation(x, y);
 		x = xCenter;
 		y = yCenter;
+		setChanged();
+		notifyObservers(point);
 	}
 	/**
 	* Sets a reference to the network model that this node belongs to
 	* @param network
 	*/
-	public void setNetwork(NetworkModel network) { model = network; }
+	public void setNetwork(NetworkModel network) {
+		model = network;
+		setChanged();
+		notifyObservers(model);
+	}
 	
 	// Methods	
 	@Override
