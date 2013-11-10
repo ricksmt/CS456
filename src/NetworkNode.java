@@ -10,7 +10,7 @@ public class NetworkNode extends Observable
 	private String name;
 	private double x;
 	private double y;
-	private NetworkModel model;
+	private NetworkModel model = null;
 	
 	/**
 	* Creates a network node
@@ -23,6 +23,11 @@ public class NetworkNode extends Observable
 	{
 		setName(nodeName);
 		setLocation(xCenter, yCenter);
+	}
+	public NetworkNode(NetworkNode node) {
+		setName(node.getName());
+		setLocation(node.getX(), node.getY());
+		setNetwork(node.getNetwork());
 	}
 	
 	// Getters and Setters
@@ -69,9 +74,10 @@ public class NetworkNode extends Observable
 	* @param network
 	*/
 	public void setNetwork(NetworkModel network) {
+		NetworkModel nm = model;
 		model = network;
 		setChanged();
-		notifyObservers(model);
+		notifyObservers(nm);
 	}
 	
 	// Methods	

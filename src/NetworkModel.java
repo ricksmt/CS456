@@ -29,6 +29,19 @@ public class NetworkModel extends Observable implements Observer
 		parseFile();
 	}
 	/**
+	 * Copy constructor
+	 * @param model The NetworkModel to copy
+	 */
+	public NetworkModel(NetworkModel model) {
+		for(int i = 0; i < model.nNodes(); i++) {
+			addNode(new NetworkNode(model.getNode(i)));
+		}
+		for(int i = 0; i < model.nConnections(); i++) {
+			addConnection(new NetworkConnection(model.getConnection(i)));
+		}
+		setFileName(model.getFileName());
+	}
+	/**
 	 * Reads the specific file and creates a new NetworkModel object that contains all of the 
 	 * information in the file. If there is no such file then an exception should be thrown.
 	 * @param fileName the name of the file to be read.
@@ -48,6 +61,8 @@ public class NetworkModel extends Observable implements Observer
 	public void setFileName(String newFileName) {
 		change = true;
 		filename = newFileName;
+		setChanged();
+		notifyObservers(filename);
 	}
 	/**
 	 * Saves the contents of this model to its file.

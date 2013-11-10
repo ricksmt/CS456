@@ -49,6 +49,12 @@ public class NetworkConnection extends Observable {
 		this.node2 = node2;
 		this.side2 = side2;
 	}
+	public NetworkConnection(NetworkConnection connection) {
+		this.node1 = connection.node1;
+		this.side1 = connection.side1;
+		this.node2 = connection.node2;
+		this.side2 = connection.side2;
+	}
 	
 	@Override
 	public String toString() { return "\"" + node1 + "\" " + side1 + " \"" + node2 + "\" " + side2; }
