@@ -3,6 +3,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,6 +14,9 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.CubicCurve2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.PathIterator;
 import java.io.File;
 import java.io.IOException;
 import java.util.Observable;
@@ -227,7 +231,10 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 			if(connection.side2 == NetworkConnection.Side.Top) y2 -= fontHeight;
 			else if(connection.side2 == NetworkConnection.Side.Bottom) y2 += fontHeight;
 			
-			g.drawLine(x1, y1, x2, y2);
+			CubicCurve2D.Double curve = new CubicCurve2D.Double(
+					x1, y1, x1 + (x1 - node1.getX()), y1 + (y1 - node1.getY()),
+					x2 + (x2 - node2.getX()), y2 + (y2 - node2.getY()), x2, y2);
+			((Graphics2D)g).draw(curve);
 			if(descriptor != null && connection.equals(descriptor.object)) {
 				g.fill3DRect(x1 - 2, y1 - 2, 4, 4, false);
 				g.fill3DRect(x2 - 2, y2 - 2, 4, 4, false);
@@ -268,17 +275,26 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 				case Top: p2.setLocation(p2.getX(), p2.getY() - fm.getHeight()); break;
 			}
 			
-			// Get box
-			Point min = new Point(), max = new Point();
-			min.setLocation(Math.min(p1.getX(), p2.getX()), Math.min(p1.getY(), p2.getY()));
-			max.setLocation(Math.max(p1.getX(), p2.getX()), Math.max(p1.getY(), p2.getY()));
-			if(mouseLoc.getX() < min.getX() - ERROR) continue;
-			else if(mouseLoc.getX() > max.getX() + ERROR) continue;
-			else if(mouseLoc.getY() < min.getY() - ERROR) continue;
-			else if(mouseLoc.getY() > max.getY() + ERROR) continue;
-			else if(Math.abs(((p2.getY() - p1.getY()) * mouseLoc.getX() + (p1.getX() - p2.getX()) * mouseLoc.getY() + p2.getX() * p1.getY() - p1.getX() * p2.getY()) /
-					(Math.pow(Math.pow(p2.getX() - p1.getX(), 2) + Math.pow(p2.getY() - p1.getY(), 2), 0.5))) <= ERROR) {
-				return new GeometryDescriptor(c, i);
+			CubicCurve2D.Double curve = new CubicCurve2D.Double(
+					p1.getX(), p1.getY(), p1.getX() + (p1.getX() - n1.getX()), p1.getY() + (p1.getY() - n1.getY()),
+					p2.getX() + (p2.getX() - n2.getX()), p2.getY() + (p2.getY() - n2.getY()), p2.getX(), p2.getY());
+			
+			// Bounds check
+			Point current = new Point();
+			for(PathIterator iterator = curve.getPathIterator(null, 1); !iterator.isDone(); iterator.next()) {
+				double[] coords = new double[6];
+				switch(iterator.currentSegment(coords)) {
+					case PathIterator.SEG_MOVETO:
+						current.setLocation(coords[0], coords[1]);
+						break;
+					case PathIterator.SEG_LINETO:
+						Point next = new Point();
+						next.setLocation(coords[0], coords[1]);
+						Line2D line = new Line2D.Double(current, next);
+						if(line.ptSegDist(mouseLoc) < ERROR) return new GeometryDescriptor(c, i);
+						current.setLocation(next);
+						break;
+				}
 			}
 		}
 		for(int i = model.nNodes() - 1; i >= 0; i--) {
@@ -343,7 +359,7 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 	public void mousePressed(MouseEvent e) {
 		lastEvent = e;
 		GeometryDescriptor gd = pointGeometry(e.getPoint());
-		if(gd.equals(GeometryDescriptor.NULL_DESCRIPTOR)) return;
+		if(gd.equals(GeometryDescriptor.NULL_DESCRIPTOR)) descriptor = GeometryDescriptor.NULL_DESCRIPTOR;
 		else if(gd.equals(descriptor)) return;
 		else descriptor = gd;
 		repaint();
