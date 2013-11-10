@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
  */
 public class NetworkModel extends Observable implements Observer
 {
-	private static final String DEFAULT_FILENAME = "Default.txt";
+	public static final String DEFAULT_FILENAME = "Default.txt";
 	private String filename;
 	private List<NetworkNode> nodes = new ArrayList<NetworkNode>();
 	private List<NetworkConnection> connections = new ArrayList<NetworkConnection>();

@@ -1,35 +1,21 @@
-import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontMetrics;
-import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.PathIterator;
-import java.io.File;
-import java.io.IOException;
 import java.util.Observable;
 import java.util.Observer;
 
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 
 @SuppressWarnings("serial")
@@ -40,7 +26,6 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 	NetworkModel model = null;
 	GeometryDescriptor descriptor = new GeometryDescriptor();
 	MouseEvent lastEvent = null;
-	JFileChooser fileChooser = new JFileChooser(".");
 	
 	public NetworkView(NetworkModel model) {
 		setFont(new Font("Helvetica", Font.PLAIN, fontHeight));
@@ -50,126 +35,6 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		this.addKeyListener(this);
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
-		
-		fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("", "txt"));
-		
-		JMenuBar menuBar = new JMenuBar();
-		JMenu file = new JMenu("File");
-		
-		JMenuItem open = new JMenuItem("Open");
-		open.addActionListener(new ActionListener() {
-		    public void actionPerformed(ActionEvent e) {
-		        if(fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-		    		File file = fileChooser.getSelectedFile();
-		    		JFrame F = new JFrame(file.getName()); // Create the frame with a title
-		    		F.setBounds(100, 100, 300, 400);// Set the position and size of the  frame's window
-		    		F.addWindowListener(
-		    			new WindowAdapter() {// Setup quitting on close of window
-		    				public void windowClosing(WindowEvent evt) {
-		    					JFrame frame = (JFrame)evt.getSource();
-		    					Component[] components = frame.getContentPane().getComponents();
-		    					for(int i = 0; i < components.length; i++) {
-		    						Component component = components[i];
-		    						if(component instanceof NetworkView) {
-		    							NetworkView view = (NetworkView)component;
-		    							NetworkModel model = view.getNetworkModel();
-		    							if(model.countObservers() == 1 && model.unsavedChanges()) {
-		    								try { model.save(); }
-		    								catch (IOException e) { }// TODO
-		    							}
-		    							break;
-		    						}
-		    					}
-		    					
-		    					int count = 0;
-		    					Frame[] frames = JFrame.getFrames();
-		    					for(int i = 0; i < frames.length; i++) {
-		    						if(frames[i] instanceof JFrame) {
-		    							JFrame f = (JFrame)frames[i];
-		    							if(f.isVisible()) count++;
-		    						}
-		    					}
-		    					if(count == 1) System.exit(0);
-		    				}
-		    			}
-		    		);
-
-		    		NetworkView view = null;
-		    		Frame[] frames = JFrame.getFrames();
-		    	    for (int i = 0; i < frames.length; i++) {
-		    	    	if(!(frames[i] instanceof JFrame)) continue;
-		    	    	JFrame frame = (JFrame)frames[i];
-		    	    	Component[] components = frame.getContentPane().getComponents();
-		    	    	for(int j = 0; j < components.length; j++) {
-		    	    		if(components[j] instanceof NetworkView) {
-		    	    			NetworkView nv = (NetworkView)components[j];
-		    	    			try {
-									if(nv.model.getFileName().equals(file.getCanonicalPath())) {
-										view = new NetworkView(nv.model);
-									}
-								}
-		    	    			catch (IOException e1) {
-									if(nv.model.getFileName().equals(file.getAbsolutePath())) {
-										view = new NetworkView(nv.model);
-									}
-								}
-		    	    		}
-		    	    	}
-		    	    	if(view != null) break;
-		    	    }
-		    	    if(view == null) {
-						try {
-							view = new NetworkView(new NetworkModel(file.getCanonicalPath()));
-						}
-						catch (IOException e1) {
-							view = new NetworkView(new NetworkModel(file.getAbsolutePath()));
-						}
-		    	    }
-					
-		    		F.getContentPane().add(view);// Add our component to the frame
-		    		F.setVisible(true);
-		        }
-		    }
-		});
-		file.add(open);
-		
-		JMenuItem save = new JMenuItem("Save");
-		save.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JMenuItem item = (JMenuItem)e.getSource();
-				JMenu menu = (JMenu)((JPopupMenu)item.getParent()).getInvoker();
-				NetworkView nv = (NetworkView)((JMenuBar)menu.getParent()).getParent();
-				try { nv.model.save(); }
-				catch (IOException e1) { }// TODO
-			}
-		});
-		file.add(save);
-		
-		JMenuItem saveAs = new JMenuItem("Save As");
-		saveAs.addActionListener(new ActionListener() {
-		    public void actionPerformed(ActionEvent e) {
-				JMenuItem item = (JMenuItem)e.getSource();
-				JMenu menu = (JMenu)((JPopupMenu)item.getParent()).getInvoker();
-				NetworkView nv = (NetworkView)((JMenuBar)menu.getParent()).getParent();
-		        if(fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-		        	NetworkModel model = new NetworkModel(nv.getNetworkModel());
-		        	try {
-						model.setFileName(fileChooser.getSelectedFile().getCanonicalPath());
-					}
-		        	catch (IOException e1) {
-						model.setFileName(fileChooser.getSelectedFile().getAbsolutePath());
-					}
-		        	try { model.save(); }
-		        	catch (IOException e1) { }// TODO
-		        	nv.setNetworkModel(model);
-		        }
-		    }
-		});
-		file.add(saveAs);
-		
-		menuBar.add(file);
-		this.add(menuBar);
 	}
 	
 	public NetworkModel getNetworkModel() { return this.model; }
