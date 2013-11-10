@@ -94,6 +94,7 @@ public class NetworkModel extends Observable implements Observer
 		newNode.setNetwork(this);
 		change = nodes.add(newNode) || change;
 		newNode.addObserver(this);
+		setChanged();
 		notifyObservers(newNode);
 	}
 	/**
@@ -115,6 +116,7 @@ public class NetworkModel extends Observable implements Observer
 		NetworkNode node = nodes.remove(i);
 		node.setNetwork(null);
 		node.deleteObserver(this);
+		setChanged();
 		notifyObservers(node);
 	}
 	/**
@@ -124,6 +126,7 @@ public class NetworkModel extends Observable implements Observer
 	public void addConnection(NetworkConnection newConnection) {
 		change = connections.add(newConnection) || change;
 		newConnection.addObserver(this);
+		setChanged();
 		notifyObservers(newConnection);
 	}
 	/**
@@ -144,6 +147,7 @@ public class NetworkModel extends Observable implements Observer
 		change = true;
 		NetworkConnection connection = connections.remove(i);
 		connection.deleteObserver(this);
+		setChanged();
 		notifyObservers(connection);
 	}
 	
@@ -194,6 +198,8 @@ public class NetworkModel extends Observable implements Observer
 			nodes.clear();
 			connections.clear();
 		}
+		setChanged();
+		notifyObservers();
 	}
 	
 	/**

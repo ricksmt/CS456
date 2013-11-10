@@ -12,10 +12,6 @@ import java.io.IOException;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 
@@ -26,6 +22,7 @@ public class NetworkFrame extends JFrame {
 	 */
 	private static final long serialVersionUID = 8591374533222590896L;
 	private JFileChooser fileChooser = new JFileChooser(".");
+	protected NetworkView view = null;
 
 	public NetworkFrame(String filename) {
 		super();
@@ -53,10 +50,7 @@ public class NetworkFrame extends JFrame {
 		save.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JMenuItem item = (JMenuItem)e.getSource();
-				JMenu menu = (JMenu)((JPopupMenu)item.getParent()).getInvoker();
-				NetworkView nv = (NetworkView)((JMenuBar)menu.getParent()).getParent();
-				try { nv.model.save(); }
+				try { view.getNetworkModel().save(); }
 				catch (IOException e1) { }// TODO
 			}
 		});
@@ -65,11 +59,8 @@ public class NetworkFrame extends JFrame {
 		MenuItem saveAs = new MenuItem("Save As...");
 		saveAs.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
-				JMenuItem item = (JMenuItem)e.getSource();
-				JMenu menu = (JMenu)((JPopupMenu)item.getParent()).getInvoker();
-				NetworkView nv = (NetworkView)((JMenuBar)menu.getParent()).getParent();
 		        if(fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-		        	NetworkModel model = new NetworkModel(nv.getNetworkModel());
+		        	NetworkModel model = new NetworkModel(view.getNetworkModel());
 		        	try {
 						model.setFileName(fileChooser.getSelectedFile().getCanonicalPath());
 					}
@@ -78,7 +69,7 @@ public class NetworkFrame extends JFrame {
 					}
 		        	try { model.save(); }
 		        	catch (IOException e1) { }// TODO
-		        	nv.setNetworkModel(model);
+		        	view.setNetworkModel(model);
 		        }
 		    }
 		});
@@ -118,7 +109,6 @@ public class NetworkFrame extends JFrame {
 			}
 		});
 
-		NetworkView view = null;
 		File f = new File(filename);
 		Frame[] frames = JFrame.getFrames();
 	    for (int i = 0; i < frames.length; i++) {

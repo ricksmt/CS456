@@ -28,3 +28,11 @@ Program 3
 ---------
 
 See Project 1 notes for set up. Note: Removed mouseReleased code required for Program 2 to improve user experience in Program 3.
+
+Program 4
+---------
+
+See Project 1 notes for set up.
+
+Note that there is an assumption that the nodes have unique names.
+When this is violated, behavior is undefined.

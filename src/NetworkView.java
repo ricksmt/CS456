@@ -14,18 +14,30 @@ import java.awt.geom.PathIterator;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
+import javax.swing.JToolBar;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 
 @SuppressWarnings("serial")
-public class NetworkView extends JPanel implements KeyListener, MouseListener, MouseMotionListener, Observer {
+public class NetworkView extends JPanel implements KeyListener, MouseListener, MouseMotionListener, Observer, ChangeListener {
 
 	static final int fontHeight = 16;
 	
 	NetworkModel model = null;
 	GeometryDescriptor descriptor = new GeometryDescriptor();
 	MouseEvent lastEvent = null;
+	
+	enum State {
+		SELECT,
+		NODE,
+		CONNECTION,
+	}
+	State state = State.SELECT;
 	
 	public NetworkView(NetworkModel model) {
 		setFont(new Font("Helvetica", Font.PLAIN, fontHeight));
@@ -35,6 +47,23 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		this.addKeyListener(this);
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
+
+		JToolBar toolbar = new JToolBar();
+		ButtonGroup group = new ButtonGroup();
+		JToggleButton select = new JToggleButton("Select");
+		select.addChangeListener(this);
+		select.doClick();
+		group.add(select);
+		toolbar.add(select);
+		JToggleButton node = new JToggleButton("Node");
+		node.addChangeListener(this);
+		group.add(node);
+		toolbar.add(node);
+		JToggleButton connection = new JToggleButton("Connection");
+		connection.addChangeListener(this);
+		group.add(connection);
+		toolbar.add(connection);
+		this.add(toolbar);
 	}
 	
 	public NetworkModel getNetworkModel() { return this.model; }
@@ -211,8 +240,16 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 	@Override
 	public void mouseReleased(MouseEvent e) { }
 
+	@SuppressWarnings("incomplete-switch")
 	@Override
-	public void mouseClicked(MouseEvent e) { }
+	public void mouseClicked(MouseEvent e) {
+		switch(state) {
+			case NODE:
+				getNetworkModel().addNode(new NetworkNode("Node", e.getX(), e.getY()));
+				repaint();
+				break;
+		}
+	}
 
 	@Override
 	public void mouseEntered(MouseEvent e) { }
@@ -220,14 +257,20 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 	@Override
 	public void mouseExited(MouseEvent e) { }
 
+	@SuppressWarnings("incomplete-switch")
 	@Override
 	public void mousePressed(MouseEvent e) {
 		lastEvent = e;
-		GeometryDescriptor gd = pointGeometry(e.getPoint());
-		if(gd.equals(GeometryDescriptor.NULL_DESCRIPTOR)) descriptor = GeometryDescriptor.NULL_DESCRIPTOR;
-		else if(gd.equals(descriptor)) return;
-		else descriptor = gd;
-		repaint();
+		switch(state) {
+			case SELECT:
+				GeometryDescriptor gd = pointGeometry(e.getPoint());
+				if(gd.equals(GeometryDescriptor.NULL_DESCRIPTOR)) descriptor = GeometryDescriptor.NULL_DESCRIPTOR;
+				else if(gd.equals(descriptor)) return;
+				else descriptor = gd;
+				this.requestFocusInWindow();
+				repaint();
+				break;
+		}
 	}
 
 	@Override
@@ -257,7 +300,9 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 	}
 
 	@Override
-	public void mouseMoved(MouseEvent e) { }
+	public void mouseMoved(MouseEvent e) {
+		
+	}
 	
 	@Override
 	public void keyTyped(KeyEvent e) { }
@@ -271,6 +316,20 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		else if(e.getKeyCode() == KeyEvent.VK_ESCAPE) {
 			descriptor = null;
 			repaint();
+		}
+		else if(descriptor.object instanceof NetworkNode) {
+			switch(e.getKeyCode()) {
+				case KeyEvent.VK_BACK_SPACE:
+				case KeyEvent.VK_DELETE:
+					for(int i = 0; i < model.nNodes(); i++) {
+						NetworkNode temp = model.getNode(i);
+						if(temp.equals(descriptor.object)) {
+							getNetworkModel().removeNode(i);
+							break;
+						}
+					}
+					break;
+			}
 		}
 		else if(descriptor.object instanceof String) {
 			NetworkNode node = null;
@@ -319,6 +378,24 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 						break;
 				}
 			}
+		}
+	}
+
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		JToggleButton button = (JToggleButton)e.getSource();
+		if(button.getText().equalsIgnoreCase("Select")) {
+			if(button.isSelected()) state = State.SELECT;
+			else {
+				descriptor = GeometryDescriptor.NULL_DESCRIPTOR;
+				repaint();
+			}
+		}
+		else if(button.getText().equalsIgnoreCase("Node")) {
+			if(button.isSelected()) state = State.NODE;
+		}
+		else if(button.getText().equalsIgnoreCase("Connection")) {
+			if(button.isSelected()) state = State.CONNECTION;
 		}
 	}
 }
