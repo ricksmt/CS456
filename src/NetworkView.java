@@ -45,6 +45,7 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		SELECT,
 		NODE,
 		CONNECTION,
+		ROTATE,
 	}
 	State state = State.SELECT;
 	
@@ -80,6 +81,12 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		connection.addChangeListener(this);
 		group.add(connection);
 		toolbar.add(connection);
+		JToggleButton rotate = new JToggleButton(UIManager.getIcon("OptionPane.errorIcon"));
+		rotate.setName("Rotate");
+		rotate.setToolTipText("Rotate");
+		rotate.addChangeListener(this);
+		group.add(rotate);
+		toolbar.add(rotate);
 		this.add(toolbar, BorderLayout.WEST);
 	}
 	
@@ -531,16 +538,12 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		}
 	}
 	
-	
 	@Override
 	public void keyTyped(KeyEvent e) { }
 
-	
 	@Override
 	public void keyPressed(KeyEvent e) { }
 
-	
-	
 	@Override
 	public void keyReleased(KeyEvent e) {
 		if(descriptor == null) return;
@@ -618,7 +621,6 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		}
 	}
 
-	
 	@Override
 	public void stateChanged(ChangeEvent e) {
 		JToggleButton button = (JToggleButton)e.getSource();
@@ -634,10 +636,16 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		}
 		else if(button.getName().equalsIgnoreCase("Connection")) {
 			if(button.isSelected()) state = State.CONNECTION;
+			else {
+				descriptor = GeometryDescriptor.NULL_DESCRIPTOR;
+				repaint();
+			}
+		}
+		else if(button.getName().equalsIgnoreCase("Rotate")) {
+			if(button.isSelected()) state = State.ROTATE;
 		}
 	}
 
-	
 	private Rectangle getNetworkNodeBounds(NetworkNode n) {
 		FontMetrics fm = getFontMetrics(getFont());
 		int width = fm.stringWidth(n.getName());
@@ -649,7 +657,6 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		return r;
 	}
 	
-	
 	@SuppressWarnings("unused")
 	private Rectangle getNetworkNodeLabelBounds(NetworkNode n) {
 		FontMetrics fm = getFontMetrics(getFont());
@@ -657,7 +664,6 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		r.setFrameFromCenter(n.getX(), n.getY(), n.getX() - fm.stringWidth(n.getName()) / 2, n.getY() - fm.getHeight() / 2);
 		return r;
 	}
-	
 	
 	@SuppressWarnings("unused")
 	private Rectangle getNetworkConnectionBounds(NetworkConnection c) {
