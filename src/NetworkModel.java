@@ -231,13 +231,13 @@ public class NetworkModel extends Observable implements Observer
 		node = model.getNode(1);
 		AssertNode(node, "B", 1, 2);
 		
-		model.addConnection(new NetworkConnection("A", NetworkConnection.Side.Top, 
-												  "B", NetworkConnection.Side.Bottom));
+		model.addConnection(new NetworkConnection("A", NetworkConnection.Side.TOP, 
+												  "B", NetworkConnection.Side.BOTTOM));
 		AssertModel(model, 2, 1, true);
 		
 		NetworkConnection connection = model.getConnection(0);
-		AssertConnection(connection, "A", NetworkConnection.Side.Top,
-									 "B", NetworkConnection.Side.Bottom);
+		AssertConnection(connection, "A", NetworkConnection.Side.TOP,
+									 "B", NetworkConnection.Side.BOTTOM);
 		
 		try { model.save(); }
 		catch (IOException e) { assert(false); }
@@ -280,11 +280,11 @@ public class NetworkModel extends Observable implements Observer
 		catch (IOException e) { assert(false); }
 		AssertModel(model, 0, 0, false);
 		
-		model.addConnection(new NetworkConnection("A", NetworkConnection.Side.Left,
-												  "B", NetworkConnection.Side.Right));
+		model.addConnection(new NetworkConnection("A", NetworkConnection.Side.LEFT,
+												  "B", NetworkConnection.Side.RIGHT));
 		AssertModel(model, 0, 1, true);
-		AssertConnection(connection, "A", NetworkConnection.Side.Left,
-				 					 "B", NetworkConnection.Side.Right);
+		AssertConnection(connection, "A", NetworkConnection.Side.LEFT,
+				 					 "B", NetworkConnection.Side.RIGHT);
 
 		try { model.save(); }
 		catch (IOException e) { assert(false); }
@@ -292,8 +292,8 @@ public class NetworkModel extends Observable implements Observer
 		
 		model = new NetworkModel(DEFAULT_FILENAME);
 		AssertModel(model, 0, 1, true);
-		AssertConnection(connection, "A", NetworkConnection.Side.Left,
-				 					 "B", NetworkConnection.Side.Right);
+		AssertConnection(connection, "A", NetworkConnection.Side.LEFT,
+				 					 "B", NetworkConnection.Side.RIGHT);
 		
 		model = new NetworkModel("Empty.txt");
 		AssertModel(model, 0, 0, false);

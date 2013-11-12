@@ -1,14 +1,27 @@
+import java.util.Map;
+import java.util.TreeMap;
 
 public class GeometryDescriptor {
 	
 	Object object = null;
 	int index = -1;
+	Map<String, Object> additional = new TreeMap<String, Object>();
 	public static final GeometryDescriptor NULL_DESCRIPTOR = new GeometryDescriptor();
 	
 	public GeometryDescriptor() { }
+	public GeometryDescriptor(GeometryDescriptor gd) {
+		this.object = gd.object;
+		this.index = gd.index;
+		this.additional.putAll(gd.additional);
+	}
 	public GeometryDescriptor(Object object, int index) {
 		this.object = object;
 		this.index = index;
+	}
+	public GeometryDescriptor(Object object, int index, Map<String, Object> map) {
+		this.object = object;
+		this.index = index;
+		this.additional.putAll(map);
 	}
 
 	@Override
@@ -19,6 +32,7 @@ public class GeometryDescriptor {
 			else if(object == null && gd.object == null) return true;
 			else if(object == null || gd.object == null) return false;
 			else if(!object.equals(gd.object)) return false;
+			else if(!additional.equals(gd.additional)) return false;
 			else return true;
 		}
 		return false;

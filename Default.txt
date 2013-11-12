@@ -1,0 +1,10 @@
+N 294.0 152.0 "Node2"
+N 213.0 85.0 "Node1"
+N 223.0 246.0 "Node3"
+N 423.0 101.0 "Node4"
+C "Node1" B "Node2" L
+C "Node2" B "Node3" T
+C "Node4" B "Node2" R
+C "Node1" R "Node4" L
+C "Node4" R "Node3" R
+C "Node1" L "Node3" L

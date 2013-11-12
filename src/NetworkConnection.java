@@ -9,28 +9,28 @@ public class NetworkConnection extends Observable {
 	protected Side side1, side2;
 	
 	public enum Side {
-		Left,
-		Right,
-		Top,
-		Bottom;
+		TOP,
+		RIGHT,
+		BOTTOM,
+		LEFT;
 		
 		public static Side parseSide(char c) {
 			switch (c){
-				case 'L': return Left;
-				case 'R': return Right;
-				case 'T': return Top;
+				case 'L': return LEFT;
+				case 'R': return RIGHT;
+				case 'T': return TOP;
 				//case 'B': return Bottom;
-				default: return Bottom;
+				default: return BOTTOM;
 			}
 		}
 		
 		@Override
 		public String toString() {
 			switch(this){
-				case Left: return "L";
-				case Right: return "R";
-				case Top: return "T";
-				case Bottom: return "B";
+				case LEFT: return "L";
+				case RIGHT: return "R";
+				case TOP: return "T";
+				case BOTTOM: return "B";
 				default: return "";// TODO: Keep updated
 			}
 		}
