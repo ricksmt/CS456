@@ -12,6 +12,7 @@ import java.io.IOException;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 
@@ -80,6 +81,7 @@ public class NetworkFrame extends JFrame {
 		
 
 		this.setBounds(100, 100, 600, 400);// Set the position and size of the  frame's window
+		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		this.addWindowListener(new WindowAdapter() {// Setup quitting on close of window
 			public void windowClosing(WindowEvent evt) {
 				JFrame frame = (JFrame)evt.getSource();
@@ -90,8 +92,16 @@ public class NetworkFrame extends JFrame {
 						NetworkView view = (NetworkView)component;
 						NetworkModel model = view.getNetworkModel();
 						if(model.countObservers() == 1 && model.unsavedChanges()) {
-							try { model.save(); }
-							catch (IOException e) { }// TODO
+							String[] options = new String[] {"Yes", "No", "Cancel"};
+							switch (JOptionPane.showOptionDialog(frame, "Would you like to save your changes?", "Save?",
+										JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+										null, options, options[2])) {
+								case JOptionPane.YES_OPTION:
+									try { model.save(); }
+									catch (IOException e) { }// TODO
+								case JOptionPane.NO_OPTION: break;
+								default: return;
+							}
 						}
 						break;
 					}
@@ -100,12 +110,13 @@ public class NetworkFrame extends JFrame {
 				int count = 0;
 				Frame[] frames = JFrame.getFrames();
 				for(int i = 0; i < frames.length; i++) {
-					if(frames[i] instanceof JFrame) {
-						JFrame f = (JFrame)frames[i];
+					if(frames[i] instanceof NetworkFrame) {
+						NetworkFrame f = (NetworkFrame)frames[i];
 						if(f.isVisible()) count++;
 					}
 				}
 				if(count == 1) System.exit(0);
+				else frame.dispose();
 			}
 		});
 

@@ -81,7 +81,7 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		connection.addChangeListener(this);
 		group.add(connection);
 		toolbar.add(connection);
-		JToggleButton rotate = new JToggleButton(UIManager.getIcon("OptionPane.errorIcon"));
+		JToggleButton rotate = new JToggleButton(UIManager.getIcon("OptionPane.informationIcon"));
 		rotate.setName("Rotate");
 		rotate.setToolTipText("Rotate");
 		rotate.addChangeListener(this);
@@ -177,8 +177,7 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 				if(drawing) {
 					CubicCurve2D.Double curve = new CubicCurve2D.Double(
 							p.getX(), p.getY(), p.getX() + (p.getX() - n.getX()), p.getY() + (p.getY() - n.getY()),
-							lastEvent.getX() + lastEvent.getX(), lastEvent.getY() + lastEvent.getY(),
-							lastEvent.getX(), lastEvent.getY());
+							p.getX() + (p.getX() - n.getX()), p.getY() + (p.getY() - n.getY()), lastEvent.getX(), lastEvent.getY());
 					((Graphics2D)g).draw(curve);
 					if(descriptor.additional.containsKey("Target")) {
 						GeometryDescriptor target = (GeometryDescriptor)descriptor.additional.get("Target");
@@ -218,17 +217,17 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 			Point p1 = new Point(), p2 = new Point();
 			p1.setLocation(n1.getX(), n1.getY());
 			switch(c.side1) {
-				case BOTTOM: p1.setLocation(p1.getX(), p1.getY() + fm.getHeight()); break;
+				case BOTTOM: p1.setLocation(p1.getX(), p1.getY() + fontHeight); break;
 				case LEFT: p1.setLocation(p1.getX() - fm.stringWidth(n1.getName()), p1.getY()); break;
 				case RIGHT: p1.setLocation(p1.getX() + fm.stringWidth(n1.getName()), p1.getY()); break;
-				case TOP: p1.setLocation(p1.getX(), p1.getY() - fm.getHeight()); break;
+				case TOP: p1.setLocation(p1.getX(), p1.getY() - fontHeight); break;
 			}
 			p2.setLocation(n2.getX(), n2.getY());
 			switch(c.side2) {
-				case BOTTOM: p2.setLocation(p2.getX(), p2.getY() + fm.getHeight()); break;
+				case BOTTOM: p2.setLocation(p2.getX(), p2.getY() + fontHeight); break;
 				case LEFT: p2.setLocation(p2.getX() - fm.stringWidth(n2.getName()), p2.getY()); break;
 				case RIGHT: p2.setLocation(p2.getX() + fm.stringWidth(n2.getName()), p2.getY()); break;
-				case TOP: p2.setLocation(p2.getX(), p2.getY() - fm.getHeight()); break;
+				case TOP: p2.setLocation(p2.getX(), p2.getY() - fontHeight); break;
 			}
 			
 			CubicCurve2D.Double curve = new CubicCurve2D.Double(
@@ -259,11 +258,11 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 			// Get outer box
 			FontMetrics fm = getFontMetrics(getFont());
 			Point min = new Point(), max = new Point();
-			min.setLocation(n.getX() - fm.stringWidth(n.getName()), n.getY() - fm.getHeight());
-			max.setLocation(n.getX() + fm.stringWidth(n.getName()), n.getY() + fm.getHeight());
+			min.setLocation(n.getX() - fm.stringWidth(n.getName()), n.getY() - fontHeight);
+			max.setLocation(n.getX() + fm.stringWidth(n.getName()), n.getY() + fontHeight);
 			
 			if(Math.pow((mouseLoc.getX() - n.getX()) / fm.stringWidth(n.getName()), 2) + 
-					Math.pow((mouseLoc.getY() - n.getY()) / fm.getHeight(), 2) <= 1) {
+					Math.pow((mouseLoc.getY() - n.getY()) / fontHeight, 2) <= 1) {
 				
 				// Bounds check
 				if(mouseLoc.getX() < min.getX()) continue;
@@ -272,8 +271,8 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 				else if(mouseLoc.getY() > max.getY()) continue;
 				
 				// Get inner box
-				min.setLocation(n.getX() - fm.stringWidth(n.getName()) / 2, n.getY() - fm.getHeight() / 2);
-				max.setLocation(n.getX() + fm.stringWidth(n.getName()) / 2, n.getY() + fm.getHeight() / 2);
+				min.setLocation(n.getX() - fm.stringWidth(n.getName()) / 2, n.getY() - fontHeight / 2);
+				max.setLocation(n.getX() + fm.stringWidth(n.getName()) / 2, n.getY() + fontHeight / 2);
 				if(mouseLoc.getX() > min.getX() && mouseLoc.getX() < max.getX() &&
 						mouseLoc.getY() > min.getY() && mouseLoc.getY() < max.getY()) {
 					for(int j = 0, size = fm.stringWidth(n.getName().substring(0, 1)); j < n.getName().length();
@@ -434,7 +433,7 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 					if(r.contains(e.getPoint())) continue;
 					int code = r.outcode(e.getPoint());
 					if((code & Rectangle.OUT_TOP) != 0) {
-						p.setLocation(n.getX(), n.getY() - fm.getHeight());
+						p.setLocation(n.getX(), n.getY() - fontHeight);
 						if(p.distance(e.getPoint()) <= ERROR) {
 							if(lastEvent == null || lastEvent.getPoint().distance(p) > ERROR) {
 								lastEvent = e;
@@ -476,7 +475,7 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 						}
 					}
 					if((code & Rectangle.OUT_BOTTOM) != 0) {
-						p.setLocation(n.getX(), n.getY() + fm.getHeight());
+						p.setLocation(n.getX(), n.getY() + fontHeight);
 						if(p.distance(e.getPoint()) <= ERROR) {
 							if(lastEvent == null || lastEvent.getPoint().distance(p) > ERROR) {
 								lastEvent = e;
@@ -650,9 +649,9 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		FontMetrics fm = getFontMetrics(getFont());
 		int width = fm.stringWidth(n.getName());
 		Rectangle r = new Rectangle(new Point((int)n.getX(), (int)n.getY()));
-		r.add(n.getX(), n.getY() - (fm.getHeight() - 2));
+		r.add(n.getX(), n.getY() - (fontHeight - 2));
 		r.add(n.getX() + width, n.getY());
-		r.add(n.getX(), n.getY() + (fm.getHeight() - 2));
+		r.add(n.getX(), n.getY() + (fontHeight - 2));
 		r.add(n.getX() - width, n.getY());
 		return r;
 	}
@@ -661,7 +660,7 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 	private Rectangle getNetworkNodeLabelBounds(NetworkNode n) {
 		FontMetrics fm = getFontMetrics(getFont());
 		Rectangle r = new Rectangle();
-		r.setFrameFromCenter(n.getX(), n.getY(), n.getX() - fm.stringWidth(n.getName()) / 2, n.getY() - fm.getHeight() / 2);
+		r.setFrameFromCenter(n.getX(), n.getY(), n.getX() - fm.stringWidth(n.getName()) / 2, n.getY() - fontHeight / 2);
 		return r;
 	}
 	
@@ -680,17 +679,17 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		Point p1 = new Point(), p2 = new Point();
 		p1.setLocation(n1.getX(), n1.getY());
 		switch(c.side1) {
-			case BOTTOM: p1.setLocation(p1.getX(), p1.getY() + fm.getHeight()); break;
+			case BOTTOM: p1.setLocation(p1.getX(), p1.getY() + fontHeight); break;
 			case LEFT: p1.setLocation(p1.getX() - fm.stringWidth(n1.getName()), p1.getY()); break;
 			case RIGHT: p1.setLocation(p1.getX() + fm.stringWidth(n1.getName()), p1.getY()); break;
-			case TOP: p1.setLocation(p1.getX(), p1.getY() - fm.getHeight()); break;
+			case TOP: p1.setLocation(p1.getX(), p1.getY() - fontHeight); break;
 		}
 		p2.setLocation(n2.getX(), n2.getY());
 		switch(c.side2) {
-			case BOTTOM: p2.setLocation(p2.getX(), p2.getY() + fm.getHeight()); break;
+			case BOTTOM: p2.setLocation(p2.getX(), p2.getY() + fontHeight); break;
 			case LEFT: p2.setLocation(p2.getX() - fm.stringWidth(n2.getName()), p2.getY()); break;
 			case RIGHT: p2.setLocation(p2.getX() + fm.stringWidth(n2.getName()), p2.getY()); break;
-			case TOP: p2.setLocation(p2.getX(), p2.getY() - fm.getHeight()); break;
+			case TOP: p2.setLocation(p2.getX(), p2.getY() - fontHeight); break;
 		}
 		
 		CubicCurve2D.Double curve = new CubicCurve2D.Double(
