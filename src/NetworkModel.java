@@ -49,6 +49,7 @@ public class NetworkModel extends Observable implements Observer
 	public NetworkModel(String fileName) {
 		setFileName(fileName);
 		parseFile();
+		change = false;
 	}
 	/**
 	 * Returns the name of the file associated with this model.
@@ -111,7 +112,7 @@ public class NetworkModel extends Observable implements Observer
 	 * @param i the index of the object to be removed.
 	 */
 	public void removeNode(int i) {
-		if(i >= nodes.size()) return;
+		if(i >= nodes.size() || i < 0) return;
 		change = true;
 		NetworkNode node = nodes.remove(i);
 		node.setNetwork(null);
@@ -143,7 +144,7 @@ public class NetworkModel extends Observable implements Observer
 	 * @param i the index of the object to be removed.
 	 */
 	public void removeConnection(int i) {
-		if(i >= connections.size()) return;
+		if(i >= connections.size() || i < 0) return;
 		change = true;
 		NetworkConnection connection = connections.remove(i);
 		connection.deleteObserver(this);

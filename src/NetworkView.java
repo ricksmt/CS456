@@ -13,8 +13,10 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Line2D;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.PathIterator;
 import java.util.Map;
 import java.util.Observable;
@@ -38,8 +40,9 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 	
 	NetworkModel model = null;
 	GeometryDescriptor descriptor = new GeometryDescriptor();
+	AffineTransform transform = new AffineTransform();
 	MouseEvent lastEvent = null;
-	boolean drawing = false;
+	boolean drawing = false, dragging = false;
 	
 	enum State {
 		SELECT,
@@ -98,9 +101,12 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		this.model.addObserver(this);
 	}
 	
+	@SuppressWarnings("incomplete-switch")
 	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
+		Graphics2D g2D = (Graphics2D)g;
+		g2D.setTransform(transform);
 		
         FontMetrics fm = g.getFontMetrics();
 		for(int i = 0; i < model.nNodes(); i++) {
@@ -160,46 +166,66 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		}
 		
 		if (descriptor != null && !descriptor.equals(GeometryDescriptor.NULL_DESCRIPTOR)) {
+			g2D.setTransform(new AffineTransform());
 			g.drawString(descriptor.toString(), 50, 20);
-			if(state == State.CONNECTION) {
-				NetworkNode n = (NetworkNode)descriptor.object;
-				int width = fm.stringWidth(n.getName());
-				g.setColor(Color.RED);
-				Point p = new Point();
-				switch((NetworkConnection.Side)descriptor.additional.get("Side")) {
-					case TOP: p.setLocation(n.getX(), n.getY() - fontHeight); break;
-					case RIGHT: p.setLocation(n.getX() + width, n.getY()); break;
-					case BOTTOM: p.setLocation(n.getX(), n.getY() + fontHeight); break;
-					case LEFT: p.setLocation(n.getX() - width, n.getY()); break;
-				}
-				g.fill3DRect((int)p.getX() - 2, (int)p.getY() - 2, 4, 4, false);
-				g.setColor(Color.BLACK);
-				if(drawing) {
-					CubicCurve2D.Double curve = new CubicCurve2D.Double(
-							p.getX(), p.getY(), p.getX() + (p.getX() - n.getX()), p.getY() + (p.getY() - n.getY()),
-							p.getX() + (p.getX() - n.getX()), p.getY() + (p.getY() - n.getY()), lastEvent.getX(), lastEvent.getY());
-					((Graphics2D)g).draw(curve);
-					if(descriptor.additional.containsKey("Target")) {
-						GeometryDescriptor target = (GeometryDescriptor)descriptor.additional.get("Target");
-						NetworkNode nT = (NetworkNode)target.object;
-						int widthT = fm.stringWidth(n.getName());
-						g.setColor(Color.RED);
-						Point pT = new Point();
-						switch((NetworkConnection.Side)target.additional.get("Side")) {
-							case TOP: pT.setLocation(nT.getX(), nT.getY() - fontHeight); break;
-							case RIGHT: pT.setLocation(nT.getX() + widthT, nT.getY()); break;
-							case BOTTOM: pT.setLocation(nT.getX(), nT.getY() + fontHeight); break;
-							case LEFT: pT.setLocation(nT.getX() - widthT, nT.getY()); break;
+			switch(state) {
+				case CONNECTION:
+					g2D.setTransform(transform);
+					NetworkNode n = (NetworkNode)descriptor.object;
+					int width = fm.stringWidth(n.getName());
+					g.setColor(Color.RED);
+					Point p = new Point();
+					switch((NetworkConnection.Side)descriptor.additional.get("Side")) {
+						case TOP: p.setLocation(n.getX(), n.getY() - fontHeight); break;
+						case RIGHT: p.setLocation(n.getX() + width, n.getY()); break;
+						case BOTTOM: p.setLocation(n.getX(), n.getY() + fontHeight); break;
+						case LEFT: p.setLocation(n.getX() - width, n.getY()); break;
+					}
+					g.fill3DRect((int)p.getX() - 2, (int)p.getY() - 2, 4, 4, false);
+					g.setColor(Color.BLACK);
+					if(drawing) {
+						Point endPoint = lastEvent.getPoint();
+						try { transform.inverseTransform(endPoint, endPoint); }
+						catch (NoninvertibleTransformException e) { }
+						CubicCurve2D.Double curve = new CubicCurve2D.Double(
+								p.getX(), p.getY(), p.getX() + (p.getX() - n.getX()), p.getY() + (p.getY() - n.getY()),
+								p.getX() + (p.getX() - n.getX()), p.getY() + (p.getY() - n.getY()), endPoint.getX(), endPoint.getY());
+						((Graphics2D)g).draw(curve);
+						if(descriptor.additional.containsKey("Target")) {
+							GeometryDescriptor target = (GeometryDescriptor)descriptor.additional.get("Target");
+							NetworkNode nT = (NetworkNode)target.object;
+							int widthT = fm.stringWidth(n.getName());
+							g.setColor(Color.RED);
+							Point pT = new Point();
+							switch((NetworkConnection.Side)target.additional.get("Side")) {
+								case TOP: pT.setLocation(nT.getX(), nT.getY() - fontHeight); break;
+								case RIGHT: pT.setLocation(nT.getX() + widthT, nT.getY()); break;
+								case BOTTOM: pT.setLocation(nT.getX(), nT.getY() + fontHeight); break;
+								case LEFT: pT.setLocation(nT.getX() - widthT, nT.getY()); break;
+							}
+							g.fill3DRect((int)pT.getX() - 2, (int)pT.getY() - 2, 4, 4, false);
+							g.setColor(Color.BLACK);
 						}
-						g.fill3DRect((int)pT.getX() - 2, (int)pT.getY() - 2, 4, 4, false);
+					}
+					g2D.setTransform(new AffineTransform());
+					break;
+				case ROTATE:
+					if(!descriptor.equals(GeometryDescriptor.NULL_DESCRIPTOR)) {
+						MouseEvent e = (MouseEvent)descriptor.object;
+						g.setColor(Color.RED);
+						g.drawOval((int)e.getPoint().getX(), (int)e.getPoint().getY(), 3, 3);
 						g.setColor(Color.BLACK);
 					}
-				}
-			};
+					break;
+			}
+			g2D.setTransform(transform);
 		}
+		g2D.setTransform(new AffineTransform());
     }
 	
 	public GeometryDescriptor pointGeometry(Point mouseLoc) {
+		try { transform.inverseTransform(mouseLoc, mouseLoc); }
+		catch (NoninvertibleTransformException e) { }
 		final int ERROR = 5;
 		for(int i = model.nConnections() - 1; i >= 0; i--) {
 			// Get pieces
@@ -305,6 +331,7 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 	@SuppressWarnings("incomplete-switch")
 	@Override
 	public void mouseReleased(MouseEvent e) {
+		final int THRESHOLD = 3;
 		switch(state) {
 			case CONNECTION:
 				drawing = false;
@@ -324,16 +351,36 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 				}
 				repaint();
 				break;
+			case ROTATE:
+				if(e.getPoint().distance(lastEvent.getPoint()) <= THRESHOLD) {
+					if(descriptor.equals(GeometryDescriptor.NULL_DESCRIPTOR)) descriptor = new GeometryDescriptor(lastEvent);
+					else if(dragging) {
+						dragging = false;
+						break;
+					}
+					else if(e.getPoint().distance(((MouseEvent)descriptor.object).getPoint()) <= THRESHOLD) {
+						descriptor = GeometryDescriptor.NULL_DESCRIPTOR;
+						transform.setTransform(new AffineTransform());
+					}
+					else descriptor = new GeometryDescriptor(lastEvent);
+					repaint();
+				}
+				break;
 		}
 	}
 
-	@SuppressWarnings("incomplete-switch")
+	@SuppressWarnings({ "incomplete-switch" })
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		switch(state) {
 			case NODE:
-				getNetworkModel().addNode(new NetworkNode("Node", e.getX(), e.getY()));
-				repaint();
+				try {
+					Point transformed = new Point();
+					transform.inverseTransform(e.getPoint(), transformed);
+					getNetworkModel().addNode(new NetworkNode("Node", transformed.getX(), transformed.getY()));
+					repaint();
+				}
+				catch (NoninvertibleTransformException e1) { }
 				break;
 		}
 	}
@@ -413,6 +460,27 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 					repaint();
 				}
 				break;
+			case ROTATE:
+				if(!descriptor.equals(GeometryDescriptor.NULL_DESCRIPTOR) &&
+						e.getPoint().distance(lastEvent.getPoint()) > THRESHOLD) {
+					Point center = ((MouseEvent)descriptor.object).getPoint();
+					Point current = lastEvent.getPoint(), next = e.getPoint();
+					double scale = center.distance(next) / center.distance(current);
+					AffineTransform temp = new AffineTransform();
+					temp.translate(center.getX(), center.getY());
+					temp.scale(scale, scale);
+					temp.translate(-center.getX(), -center.getY());
+					current.translate(-(int)center.getX(), -(int)center.getY());
+					next.translate(-(int)center.getX(), -(int)center.getY());
+					temp.rotate(-Math.atan2(current.getY(), current.getX()), center.getX(), center.getY());
+					temp.rotate(Math.atan2(next.getY(), next.getX()), center.getX(), center.getY());
+					temp.concatenate(transform);
+					transform = temp;
+					lastEvent = e;
+					dragging = true;
+					repaint();
+				}
+				break;
 		}
 	}
 
@@ -422,19 +490,28 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		final int ERROR = 15;
 		switch(state) {
 			case CONNECTION:
+				Point transformed = new Point();
+				try { transform.inverseTransform(e.getPoint(), transformed); }
+				catch (NoninvertibleTransformException e2) { }
 				FontMetrics fm = getFontMetrics(getFont());
 				Point p = new Point();
 				for(int i = 0; i < getNetworkModel().nNodes(); i++) {
 					NetworkNode n = getNetworkModel().getNode(i);
-					Rectangle r = getNetworkNodeBounds(n);
+					int width = fm.stringWidth(n.getName());
+					Rectangle r = new Rectangle(new Point((int)n.getX(), (int)n.getY()));
+					r.add(n.getX(), n.getY() - (fontHeight - 2));
+					r.add(n.getX() + width, n.getY());
+					r.add(n.getX(), n.getY() + (fontHeight - 2));
+					r.add(n.getX() - width, n.getY());
 					r.grow(ERROR, ERROR);
-					if(!r.contains(e.getPoint())) continue;
+					if(!r.contains(transformed)) continue;
 					r.grow(-2 * ERROR, -2 * ERROR);
-					if(r.contains(e.getPoint())) continue;
-					int code = r.outcode(e.getPoint());
+					if(r.contains(transformed)) continue;
+					int code = r.outcode(transformed);
 					if((code & Rectangle.OUT_TOP) != 0) {
 						p.setLocation(n.getX(), n.getY() - fontHeight);
-						if(p.distance(e.getPoint()) <= ERROR) {
+						if(p.distance(transformed) <= ERROR) {
+							transform.transform(p, p);
 							if(lastEvent == null || lastEvent.getPoint().distance(p) > ERROR) {
 								lastEvent = e;
 								lastEvent.getPoint().setLocation(p);
@@ -455,7 +532,8 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 					}
 					if((code & Rectangle.OUT_RIGHT) != 0) {
 						p.setLocation(n.getX() + fm.stringWidth(n.getName()), n.getY());
-						if(p.distance(e.getPoint()) <= ERROR) {
+						if(p.distance(transformed) <= ERROR) {
+							transform.transform(p, p);
 							if(lastEvent == null || lastEvent.getPoint().distance(p) > ERROR) {
 								lastEvent = e;
 								lastEvent.getPoint().setLocation(p);
@@ -476,7 +554,8 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 					}
 					if((code & Rectangle.OUT_BOTTOM) != 0) {
 						p.setLocation(n.getX(), n.getY() + fontHeight);
-						if(p.distance(e.getPoint()) <= ERROR) {
+						if(p.distance(transformed) <= ERROR) {
+							transform.transform(p, p);
 							if(lastEvent == null || lastEvent.getPoint().distance(p) > ERROR) {
 								lastEvent = e;
 								lastEvent.getPoint().setLocation(p);
@@ -497,7 +576,8 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 					}
 					if((code & Rectangle.OUT_LEFT) != 0) {
 						p.setLocation(n.getX() - fm.stringWidth(n.getName()), n.getY());
-						if(p.distance(e.getPoint()) <= ERROR) {
+						if(p.distance(transformed) <= ERROR) {
+							transform.transform(p, p);
 							if(lastEvent == null || lastEvent.getPoint().distance(p) > ERROR) {
 								lastEvent = e;
 								lastEvent.getPoint().setLocation(p);
@@ -527,7 +607,7 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 						case BOTTOM: targeting.setLocation(n.getX(), n.getY() + fontHeight); break;
 						case LEFT: targeting.setLocation(n.getX() - width, n.getY()); break;
 					}
-					if(e.getPoint().distance(targeting) > ERROR) {
+					if(transformed.distance(targeting) > ERROR) {
 						lastEvent = null;
 						descriptor = GeometryDescriptor.NULL_DESCRIPTOR;
 						repaint();
@@ -643,59 +723,5 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		else if(button.getName().equalsIgnoreCase("Rotate")) {
 			if(button.isSelected()) state = State.ROTATE;
 		}
-	}
-
-	private Rectangle getNetworkNodeBounds(NetworkNode n) {
-		FontMetrics fm = getFontMetrics(getFont());
-		int width = fm.stringWidth(n.getName());
-		Rectangle r = new Rectangle(new Point((int)n.getX(), (int)n.getY()));
-		r.add(n.getX(), n.getY() - (fontHeight - 2));
-		r.add(n.getX() + width, n.getY());
-		r.add(n.getX(), n.getY() + (fontHeight - 2));
-		r.add(n.getX() - width, n.getY());
-		return r;
-	}
-	
-	@SuppressWarnings("unused")
-	private Rectangle getNetworkNodeLabelBounds(NetworkNode n) {
-		FontMetrics fm = getFontMetrics(getFont());
-		Rectangle r = new Rectangle();
-		r.setFrameFromCenter(n.getX(), n.getY(), n.getX() - fm.stringWidth(n.getName()) / 2, n.getY() - fontHeight / 2);
-		return r;
-	}
-	
-	@SuppressWarnings("unused")
-	private Rectangle getNetworkConnectionBounds(NetworkConnection c) {
-		NetworkNode n1 = null, n2 = null;
-		for(int j = 0; (n1 == null || n2 == null) && j < model.nNodes(); j++) {
-			NetworkNode n = model.getNode(j);
-			if(n.getName().equals(c.node1)) n1 = n;
-			else if(n.getName().equals(c.node2)) n2 = n;
-		}
-		if (n1 == null || n2 == null) return new Rectangle();
-		
-		// Get corners
-		FontMetrics fm = getFontMetrics(getFont());
-		Point p1 = new Point(), p2 = new Point();
-		p1.setLocation(n1.getX(), n1.getY());
-		switch(c.side1) {
-			case BOTTOM: p1.setLocation(p1.getX(), p1.getY() + fontHeight); break;
-			case LEFT: p1.setLocation(p1.getX() - fm.stringWidth(n1.getName()), p1.getY()); break;
-			case RIGHT: p1.setLocation(p1.getX() + fm.stringWidth(n1.getName()), p1.getY()); break;
-			case TOP: p1.setLocation(p1.getX(), p1.getY() - fontHeight); break;
-		}
-		p2.setLocation(n2.getX(), n2.getY());
-		switch(c.side2) {
-			case BOTTOM: p2.setLocation(p2.getX(), p2.getY() + fontHeight); break;
-			case LEFT: p2.setLocation(p2.getX() - fm.stringWidth(n2.getName()), p2.getY()); break;
-			case RIGHT: p2.setLocation(p2.getX() + fm.stringWidth(n2.getName()), p2.getY()); break;
-			case TOP: p2.setLocation(p2.getX(), p2.getY() - fontHeight); break;
-		}
-		
-		CubicCurve2D.Double curve = new CubicCurve2D.Double(
-				p1.getX(), p1.getY(), p1.getX() + (p1.getX() - n1.getX()), p1.getY() + (p1.getY() - n1.getY()),
-				p2.getX() + (p2.getX() - n2.getX()), p2.getY() + (p2.getY() - n2.getY()), p2.getX(), p2.getY());
-		
-		return curve.getBounds();
 	}
 }

@@ -39,3 +39,13 @@ Note that there is an assumption that the nodes have unique names.
 Consequently, I've augmented my point geometry so this is only an issue when
 	inserting connections on nodes with duplicate names.
 Coincidentally, I've enabled node deletion and connection deletion.
+
+Program 5
+---------
+
+See Project 1 notes for set up.
+
+Corrected Program 4 mistakes.
+Note: When scaled small selection may be a little off.
+	It doesn't occur when enlarged.
+	Presumably a precision issue. I can't seem to fix it.

@@ -1,3 +1,4 @@
+import java.awt.event.MouseEvent;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -14,6 +15,7 @@ public class GeometryDescriptor {
 		this.index = gd.index;
 		this.additional.putAll(gd.additional);
 	}
+	public GeometryDescriptor(Object object) { this.object = object; }
 	public GeometryDescriptor(Object object, int index) {
 		this.object = object;
 		this.index = index;
@@ -45,6 +47,15 @@ public class GeometryDescriptor {
 		else if(object instanceof NetworkConnection) sb.append("Connection");
 		else if(object instanceof NetworkNode) sb.append("Node");
 		else if(object instanceof String) sb.append("Character");
+		else if(object instanceof MouseEvent) {
+			MouseEvent event = (MouseEvent)object;
+			sb.append("Center at (");
+			sb.append((int)event.getPoint().getX());
+			sb.append(", ");
+			sb.append((int)event.getPoint().getY());
+			sb.append(')');
+			return sb.toString();
+		}
 		sb.append(" (" + index + ')');
 		return sb.toString();
 	}
