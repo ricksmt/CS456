@@ -5,6 +5,9 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Menu;
+import java.awt.MenuBar;
+import java.awt.MenuItem;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
@@ -722,6 +725,25 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 		}
 		else if(button.getName().equalsIgnoreCase("Rotate")) {
 			if(button.isSelected()) state = State.ROTATE;
+		}
+	}
+	
+	private void executeAndUpdate(CommandObj command) {
+		command.execute();
+		NetworkFrame frame = (NetworkFrame)getParent();
+		MenuBar menubar = frame.getMenuBar();
+		for(int i = 0; i < menubar.getMenuCount(); i++) {
+			Menu menu = menubar.getMenu(i);
+			if(menu.getName().equalsIgnoreCase("Edit")) {
+				for(int j = 0; j < menu.getItemCount(); j++) {
+					MenuItem item = menu.getItem(j);
+					if(item.getName().equalsIgnoreCase("Undo")) {
+						item.setEnabled(true);
+						break;
+					}
+				}
+				break;
+			}
 		}
 	}
 }

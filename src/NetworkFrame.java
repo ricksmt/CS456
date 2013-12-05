@@ -30,6 +30,8 @@ public class NetworkFrame extends JFrame {
 		fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("", "txt"));
 		
 		MenuBar menuBar = new MenuBar();
+		
+		// File
 		Menu file = new Menu("File");
 		
 		MenuItem open = new MenuItem("Open...");
@@ -77,9 +79,32 @@ public class NetworkFrame extends JFrame {
 		file.add(saveAs);
 		
 		menuBar.add(file);
-		this.setMenuBar(menuBar);
 		
-
+		// Edit
+		Menu edit = new Menu("Edit");
+		
+		MenuItem undo = new MenuItem("Undo");
+		undo.addActionListener(new ActionListener() {
+		    public void actionPerformed(ActionEvent e) {
+		    	CommandObj.Undo();
+		    }
+		});
+		undo.setEnabled(false);// Initially nothing to undo
+		file.add(undo);
+		
+		MenuItem redo = new MenuItem("Undo");
+		redo.addActionListener(new ActionListener() {
+		    public void actionPerformed(ActionEvent e) {
+		    	CommandObj.Redo();
+		    }
+		});
+		redo.setEnabled(false);// Initially nothing to redo
+		file.add(redo);
+		
+		menuBar.add(edit);
+		
+		// Preparation
+		this.setMenuBar(menuBar);
 		this.setBounds(100, 100, 600, 400);// Set the position and size of the  frame's window
 		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		this.addWindowListener(new WindowAdapter() {// Setup quitting on close of window
