@@ -1,10 +1,11 @@
 
-public class AddNodeCommandObj extends ModelCommandObj {
+public class AddNodeCommandObj extends CommandObj {
 
+	NetworkModel model;
 	NetworkNode node;
 	
 	public AddNodeCommandObj(NetworkModel model, NetworkNode node) {
-		super(model);
+		this.model = model;
 		this.node = node;
 	}
 

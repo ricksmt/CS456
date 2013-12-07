@@ -1,10 +1,8 @@
 import java.awt.Component;
 import java.awt.Frame;
-import java.awt.Menu;
-import java.awt.MenuBar;
-import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -12,15 +10,17 @@ import java.io.IOException;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
+import javax.swing.KeyStroke;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 
 public class NetworkFrame extends JFrame {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 8591374533222590896L;
 	private JFileChooser fileChooser = new JFileChooser(".");
 	protected NetworkView view = null;
@@ -29,12 +29,14 @@ public class NetworkFrame extends JFrame {
 		super();
 		fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("", "txt"));
 		
-		MenuBar menuBar = new MenuBar();
+		JMenuBar menuBar = new JMenuBar();
 		
 		// File
-		Menu file = new Menu("File");
+		JMenu file = new JMenu("File");
+		file.setMnemonic(KeyEvent.VK_F);
 		
-		MenuItem open = new MenuItem("Open...");
+		JMenuItem open = new JMenuItem("Open...", KeyEvent.VK_O);
+		open.setAccelerator(KeyStroke.getKeyStroke("control O"));
 		open.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
 		        if(fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
@@ -49,7 +51,8 @@ public class NetworkFrame extends JFrame {
 		});
 		file.add(open);
 		
-		MenuItem save = new MenuItem("Save");
+		JMenuItem save = new JMenuItem("Save", KeyEvent.VK_S);
+		save.setAccelerator(KeyStroke.getKeyStroke("control S"));
 		save.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -59,7 +62,8 @@ public class NetworkFrame extends JFrame {
 		});
 		file.add(save);
 		
-		MenuItem saveAs = new MenuItem("Save As...");
+		JMenuItem saveAs = new JMenuItem("Save As...", KeyEvent.VK_A);
+		saveAs.setAccelerator(KeyStroke.getKeyStroke("control A"));
 		saveAs.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
 		        if(fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
@@ -81,30 +85,35 @@ public class NetworkFrame extends JFrame {
 		menuBar.add(file);
 		
 		// Edit
-		Menu edit = new Menu("Edit");
+		JMenu edit = new JMenu("Edit");
+		edit.setMnemonic(KeyEvent.VK_E);
 		
-		MenuItem undo = new MenuItem("Undo");
+		JMenuItem undo = new JMenuItem("Undo", KeyEvent.VK_Z);
+		undo.setAccelerator(KeyStroke.getKeyStroke("control Z"));
 		undo.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
 		    	CommandObj.Undo();
-		    	MenuItem item = (MenuItem)e.getSource();
-		    	Menu menu = (Menu)item.getParent();
-		    	MenuBar bar = (MenuBar)menu.getParent();
-		    	NetworkFrame frame = (NetworkFrame)bar.getParent();
+		    	JMenuItem item = (JMenuItem)e.getSource();
+		    	JPopupMenu popup = (JPopupMenu)item.getParent();
+		    	JMenu menu = (JMenu)popup.getInvoker();
+		    	JMenuBar bar = (JMenuBar)menu.getParent();
+		    	NetworkFrame frame = (NetworkFrame)bar.getParent().getParent().getParent();
 		    	frame.Refresh();
 		    }
 		});
 		undo.setEnabled(false);// Initially nothing to undo
 		edit.add(undo);
 		
-		MenuItem redo = new MenuItem("Redo");
+		JMenuItem redo = new JMenuItem("Redo", KeyEvent.VK_Z | KeyEvent.SHIFT_DOWN_MASK);
+		redo.setAccelerator(KeyStroke.getKeyStroke("control shift Z"));
 		redo.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
 		    	CommandObj.Redo();
-		    	MenuItem item = (MenuItem)e.getSource();
-		    	Menu menu = (Menu)item.getParent();
-		    	MenuBar bar = (MenuBar)menu.getParent();
-		    	NetworkFrame frame = (NetworkFrame)bar.getParent();
+		    	JMenuItem item = (JMenuItem)e.getSource();
+		    	JPopupMenu popup = (JPopupMenu)item.getParent();
+		    	JMenu menu = (JMenu)popup.getInvoker();
+		    	JMenuBar bar = (JMenuBar)menu.getParent();
+		    	NetworkFrame frame = (NetworkFrame)bar.getParent().getParent().getParent();
 		    	frame.Refresh();
 		    }
 		});
@@ -112,9 +121,30 @@ public class NetworkFrame extends JFrame {
 		edit.add(redo);
 		
 		menuBar.add(edit);
+		this.setJMenuBar(menuBar);
 		
-		// Preparation
-		this.setMenuBar(menuBar);
+		// MenuBar shortcut
+//		Action menuAction = new AbstractAction() {
+//			private static final long serialVersionUID = -5053982848917373312L;
+//			
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				JRootPane rootPane = getRootPane();
+//				JMenuBar jMenuBar = rootPane.getJMenuBar();
+//				JMenu menu = jMenuBar.getMenu(0);
+//				menu.setSelected(true);
+//			}
+//		};
+//
+//        JRootPane rootPane = getRootPane();
+//        ActionMap actionMap = rootPane.getActionMap();
+//
+//        final String MENU_ACTION_KEY = "expand_that_first_menu_please";
+//        actionMap.put(MENU_ACTION_KEY, menuAction);
+//        InputMap inputMap = rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+//        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true), MENU_ACTION_KEY);
+		
+		// Normal stuff
 		this.setBounds(100, 100, 600, 400);// Set the position and size of the  frame's window
 		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		this.addWindowListener(new WindowAdapter() {// Setup quitting on close of window
@@ -192,16 +222,16 @@ public class NetworkFrame extends JFrame {
 	}
 	
 	public void Refresh() {
-		MenuBar bar = getMenuBar();
-		for(int i = 0; i < getMenuBar().getMenuCount(); i++) {
-			Menu menu = bar.getMenu(i);
-			if(menu.getLabel().equalsIgnoreCase("Edit")) {
+		JMenuBar bar = getJMenuBar();
+		for(int i = 0; i < bar.getMenuCount(); i++) {
+			JMenu menu = bar.getMenu(i);
+			if(menu.getText().equalsIgnoreCase("Edit")) {
 				for(int j = 0; j < menu.getItemCount(); j++) {
-					MenuItem item = menu.getItem(j);
-					if(item.getLabel().equalsIgnoreCase("Undo")) {
+					JMenuItem item = menu.getItem(j);
+					if(item.getText().equalsIgnoreCase("Undo")) {
 						item.setEnabled(CommandObj.canUndo());
 					}
-					else if(item.getLabel().equalsIgnoreCase("Redo")) {
+					else if(item.getText().equalsIgnoreCase("Redo")) {
 						item.setEnabled(CommandObj.canRedo());
 					}
 				}
