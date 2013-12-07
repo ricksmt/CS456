@@ -380,7 +380,9 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 				try {
 					Point transformed = new Point();
 					transform.inverseTransform(e.getPoint(), transformed);
-					getNetworkModel().addNode(new NetworkNode("Node", transformed.getX(), transformed.getY()));
+					executeAndUpdate(new AddNodeCommandObj(getNetworkModel(),
+							new NetworkNode("Node", transformed.getX(), transformed.getY())));
+//					getNetworkModel().addNode(new NetworkNode("Node", transformed.getX(), transformed.getY()));
 					repaint();
 				}
 				catch (NoninvertibleTransformException e1) { }
@@ -729,15 +731,15 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 	}
 	
 	private void executeAndUpdate(CommandObj command) {
-		command.execute();
-		NetworkFrame frame = (NetworkFrame)getParent();
+		command.Execute();
+		NetworkFrame frame = (NetworkFrame)getParent().getParent().getParent().getParent();
 		MenuBar menubar = frame.getMenuBar();
 		for(int i = 0; i < menubar.getMenuCount(); i++) {
 			Menu menu = menubar.getMenu(i);
-			if(menu.getName().equalsIgnoreCase("Edit")) {
+			if(menu.getLabel().equalsIgnoreCase("Edit")) {
 				for(int j = 0; j < menu.getItemCount(); j++) {
 					MenuItem item = menu.getItem(j);
-					if(item.getName().equalsIgnoreCase("Undo")) {
+					if(item.getLabel().equalsIgnoreCase("Undo")) {
 						item.setEnabled(true);
 						break;
 					}

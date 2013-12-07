@@ -1,8 +1,8 @@
 import java.util.Observable;
 
-	/**
-	* This class describes a connection between two network nodes
-	*/
+/**
+* This class describes a connection between two network nodes
+*/
 public class NetworkConnection extends Observable {
 	
 	protected String node1, node2;
@@ -49,6 +49,7 @@ public class NetworkConnection extends Observable {
 		this.node2 = node2;
 		this.side2 = side2;
 	}
+	
 	public NetworkConnection(NetworkConnection connection) {
 		this.node1 = connection.node1;
 		this.side1 = connection.side1;
@@ -58,4 +59,14 @@ public class NetworkConnection extends Observable {
 	
 	@Override
 	public String toString() { return "\"" + node1 + "\" " + side1 + " \"" + node2 + "\" " + side2; }
+	
+	@Override
+	public boolean equals(Object o) {
+		if(!(o instanceof NetworkConnection)) return false;
+		NetworkConnection c = (NetworkConnection)o;
+		return side1 == c.side1 &&
+				side2 == c.side2 &&
+				node1.equals(c.node1) &&
+				node2.equals(c.node2);
+	}
 }

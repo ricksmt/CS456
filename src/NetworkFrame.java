@@ -87,19 +87,29 @@ public class NetworkFrame extends JFrame {
 		undo.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
 		    	CommandObj.Undo();
+		    	MenuItem item = (MenuItem)e.getSource();
+		    	Menu menu = (Menu)item.getParent();
+		    	MenuBar bar = (MenuBar)menu.getParent();
+		    	NetworkFrame frame = (NetworkFrame)bar.getParent();
+		    	frame.Refresh();
 		    }
 		});
 		undo.setEnabled(false);// Initially nothing to undo
-		file.add(undo);
+		edit.add(undo);
 		
-		MenuItem redo = new MenuItem("Undo");
+		MenuItem redo = new MenuItem("Redo");
 		redo.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
 		    	CommandObj.Redo();
+		    	MenuItem item = (MenuItem)e.getSource();
+		    	Menu menu = (Menu)item.getParent();
+		    	MenuBar bar = (MenuBar)menu.getParent();
+		    	NetworkFrame frame = (NetworkFrame)bar.getParent();
+		    	frame.Refresh();
 		    }
 		});
 		redo.setEnabled(false);// Initially nothing to redo
-		file.add(redo);
+		edit.add(redo);
 		
 		menuBar.add(edit);
 		
@@ -179,5 +189,24 @@ public class NetworkFrame extends JFrame {
 		this.setTitle(f.getName());
 		this.getContentPane().add(view);// Add our component to the frame
 		this.setVisible(true);
+	}
+	
+	public void Refresh() {
+		MenuBar bar = getMenuBar();
+		for(int i = 0; i < getMenuBar().getMenuCount(); i++) {
+			Menu menu = bar.getMenu(i);
+			if(menu.getLabel().equalsIgnoreCase("Edit")) {
+				for(int j = 0; j < menu.getItemCount(); j++) {
+					MenuItem item = menu.getItem(j);
+					if(item.getLabel().equalsIgnoreCase("Undo")) {
+						item.setEnabled(CommandObj.canUndo());
+					}
+					else if(item.getLabel().equalsIgnoreCase("Redo")) {
+						item.setEnabled(CommandObj.canRedo());
+					}
+				}
+				break;
+			}
+		}
 	}
 }

@@ -6,11 +6,11 @@ import java.util.Stack;
  * Expected usage:
  * 
  * 		CommandObj command = new DerivedCommandObj(args);
- * 		command.execute();
+ * 		command.Execute();
  * 
  * Or more concisely:
  * 
- * 		(new DerivedCommandObj(args)).execute();
+ * 		(new DerivedCommandObj(args)).Execute();
  * 
  * @author ricksmt
  */
@@ -36,8 +36,17 @@ public class CommandObj {
 		undo.add(command);
 	}
 	
-	public CommandObj() { undo.push(this); }
+	public void Execute() {
+		execute();
+		undo.push(this);
+	}
 	
+	/**
+	 * NOT intended for public use
+	 */
 	protected void execute() { }
+	/**
+	 * NOT intended for public use
+	 */
 	protected void reverse() { }
 }

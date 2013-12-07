@@ -83,4 +83,13 @@ public class NetworkNode extends Observable
 	// Methods	
 	@Override
 	public String toString() { return x + " " + y + " \"" + name + "\""; }
+	
+	@Override
+	public boolean equals(Object o) {
+		if(!(o instanceof NetworkNode)) return false;
+		NetworkNode n = (NetworkNode)o;
+		return getName().equals(n.getName()) &&
+				getX() == n.getX() &&
+				getY() == n.getY();
+	}
 }
