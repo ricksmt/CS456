@@ -5,9 +5,6 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Menu;
-import java.awt.MenuBar;
-import java.awt.MenuItem;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
@@ -28,6 +25,9 @@ import java.util.TreeMap;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
@@ -343,11 +343,12 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 				mouseMoved(e);
 				if(!descriptor.equals(GeometryDescriptor.NULL_DESCRIPTOR)) {
 					if(!start.object.equals(descriptor.object)) {
-						getNetworkModel().addConnection(new NetworkConnection(
-								((NetworkNode)start.object).getName(),
+						executeAndUpdate(new AddConnectionCommandObj(
+							getNetworkModel(),
+							new NetworkConnection(((NetworkNode)start.object).getName(),
 								(NetworkConnection.Side)start.additional.get("Side"),
 								((NetworkNode)descriptor.object).getName(),
-								(NetworkConnection.Side)descriptor.additional.get("Side")));
+								(NetworkConnection.Side)descriptor.additional.get("Side"))));
 					}
 					descriptor = GeometryDescriptor.NULL_DESCRIPTOR;
 					lastEvent = null;
@@ -436,7 +437,9 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 					double deltaY = e.getPoint().getY() - lastEvent.getPoint().getY();
 					lastEvent = e;
 					NetworkNode node = (NetworkNode)descriptor.object;
-					node.setLocation(node.getX() + deltaX, node.getY() + deltaY);
+					Point destination = new Point();
+					destination.setLocation(node.getX() + deltaX, node.getY() + deltaY);
+					executeAndUpdate(new MoveNodeCommandObj(node, destination));
 				}
 				break;
 			case CONNECTION:
@@ -480,7 +483,7 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 					temp.rotate(-Math.atan2(current.getY(), current.getX()), center.getX(), center.getY());
 					temp.rotate(Math.atan2(next.getY(), next.getX()), center.getX(), center.getY());
 					temp.concatenate(transform);
-					transform = temp;
+					executeAndUpdate(new TransformCommandObj(this, transform, temp));
 					lastEvent = e;
 					dragging = true;
 					repaint();
@@ -666,7 +669,9 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 			}
 		}
 		else if(descriptor.object instanceof String) {
-			NetworkNode node = (NetworkNode)descriptor.additional.get("Node");
+			if(e.isControlDown()) return;// Assume it's an accelerator
+			GeometryDescriptor original = new GeometryDescriptor(descriptor);
+			NetworkNode node = (NetworkNode)original.additional.get("Node");
 			String name = node.getName();
 			switch(e.getKeyCode()) {
 				case KeyEvent.VK_BACK_SPACE:
@@ -674,13 +679,13 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 					String backspace = name.substring(0, descriptor.index - 1) + name.substring(descriptor.index);
 					descriptor.object = backspace;
 					descriptor.index--;
-					node.setName(backspace);
+					executeAndUpdate(new ChangeNodeNameCommandObj(this, original, new GeometryDescriptor(descriptor)));
 					break;
 				case KeyEvent.VK_DELETE:
 					if(descriptor.index >= name.length()) break;
 					String delete = name.substring(0, descriptor.index) + name.substring(descriptor.index + 1);
 					descriptor.object = delete;
-					node.setName(delete);
+					executeAndUpdate(new ChangeNodeNameCommandObj(this, original, new GeometryDescriptor(descriptor)));
 					break;
 				case KeyEvent.VK_LEFT:
 					if(descriptor.index > 0) {
@@ -699,7 +704,7 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 					String result = name.substring(0, descriptor.index) + e.getKeyChar() + name.substring(descriptor.index);
 					descriptor.object = result;
 					descriptor.index++;
-					node.setName(result);
+					executeAndUpdate(new ChangeNodeNameCommandObj(this, original, new GeometryDescriptor(descriptor)));
 					break;
 			}
 		}
@@ -733,13 +738,13 @@ public class NetworkView extends JPanel implements KeyListener, MouseListener, M
 	private void executeAndUpdate(CommandObj command) {
 		command.Execute();
 		NetworkFrame frame = (NetworkFrame)getParent().getParent().getParent().getParent();
-		MenuBar menubar = frame.getMenuBar();
+		JMenuBar menubar = frame.getJMenuBar();
 		for(int i = 0; i < menubar.getMenuCount(); i++) {
-			Menu menu = menubar.getMenu(i);
-			if(menu.getLabel().equalsIgnoreCase("Edit")) {
+			JMenu menu = menubar.getMenu(i);
+			if(menu.getText().equalsIgnoreCase("Edit")) {
 				for(int j = 0; j < menu.getItemCount(); j++) {
-					MenuItem item = menu.getItem(j);
-					if(item.getLabel().equalsIgnoreCase("Undo")) {
+					JMenuItem item = menu.getItem(j);
+					if(item.getText().equalsIgnoreCase("Undo")) {
 						item.setEnabled(true);
 						break;
 					}

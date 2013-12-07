@@ -30,6 +30,7 @@ Program 3
 See Project 1 notes for set up.
 Note: Removed mouseReleased code required for Program 2 to improve user experience in Program 3.
 
+
 Program 4
 ---------
 
@@ -40,6 +41,7 @@ Consequently, I've augmented my point geometry so this is only an issue when
 	inserting connections on nodes with duplicate names.
 Coincidentally, I've enabled node deletion and connection deletion.
 
+
 Program 5
 ---------
 
@@ -49,3 +51,15 @@ Corrected Program 4 mistakes.
 Note: When scaled small selection may be a little off.
 	It doesn't occur when enlarged.
 	Presumably a precision issue. I can't seem to fix it.
+
+
+Program 6
+---------
+
+See Project 1 notes for set up.
+
+I did try to implement some shortcuts.
+Not all of the standard shortcuts work, but Ctrl + Z and Ctrl + Shift + Z
+	are working for undo and redo, respectively.
+You'll find this useful in the case of moving a node or scaling/rotating
+	because those commands are generated incrementally.
